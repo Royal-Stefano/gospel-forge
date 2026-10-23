@@ -15,48 +15,7 @@ import {
   ModerationReport,
   PublicationStatus,
 } from "@/types";
-import { EPISODES as INITIAL_EPISODES, SERIES_LIST, SPEAKERS } from "@/data/mockData";
 import { useAuth } from "./AuthContext";
-
-const INITIAL_AUDIT_LOGS: AuditLog[] = [
-  {
-    id: "log-1",
-    userId: "usr-admin",
-    userName: "Dr. Sarah Jenkins",
-    userRole: "admin",
-    action: "PUBLISH_EPISODE",
-    targetType: "episode",
-    targetId: "ep-1",
-    targetTitle: "Purpose in the Process",
-    createdAt: "2024-10-12T08:00:00Z",
-  },
-  {
-    id: "log-2",
-    userId: "usr-editor",
-    userName: "Ethan Cross",
-    userRole: "editor",
-    action: "CREATE_DRAFT",
-    targetType: "episode",
-    targetId: "ep-draft-sample",
-    targetTitle: "Forged in the Wilderness (Draft)",
-    createdAt: "2024-10-22T14:30:00Z",
-  },
-];
-
-const INITIAL_REPORTS: ModerationReport[] = [
-  {
-    id: "rep-1",
-    targetType: "post",
-    targetId: "post-sample",
-    content: "Potential self-promotion link posted in prayer discussion.",
-    authorName: "Anonymous Visitor",
-    authorId: "usr-anon",
-    reportedBy: "Sarah K.",
-    reason: "Off-topic solicitation",
-    status: "pending",
-    reportedAt: "2024-10-23T11:20:00Z",
-  },
-];
 
 interface PodcastStoreContextType {
   episodes: Episode[];
@@ -64,6 +23,7 @@ interface PodcastStoreContextType {
   speakers: Speaker[];
   auditLogs: AuditLog[];
   moderationReports: ModerationReport[];
+  isLoading: boolean;
   createEpisode: (
     data: Omit<Episode, "id" | "playCount" | "likesCount" | "createdAt" | "updatedAt">
   ) => Promise<{ success: boolean; episode?: Episode; error?: string }>;
@@ -86,6 +46,7 @@ interface PodcastStoreContextType {
   ) => Promise<{ success: boolean; error?: string }>;
   getEpisodeBySlug: (slug: string) => Episode | undefined;
   getPublishedEpisodes: () => Episode[];
+  refreshData: () => Promise<void>;
 }
 
 const PodcastStoreContext = createContext<PodcastStoreContextType | undefined>(
@@ -98,41 +59,49 @@ export function PodcastStoreProvider({
   children: React.ReactNode;
 }) {
   const { currentUser, canPublish } = useAuth();
-  const [episodes, setEpisodes] = useState<Episode[]>(() => {
-    // Tag initial episodes as 'published'
-    return INITIAL_EPISODES.map((e) => ({
-      ...e,
-      status: (e.status || "published") as PublicationStatus,
-    }));
-  });
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
-  const [moderationReports, setModerationReports] =
-    useState<ModerationReport[]>(INITIAL_REPORTS);
+  const [episodes, setEpisodes] = useState<Episode[]>([]);
+  const [seriesList, setSeriesList] = useState<Series[]>([]);
+  const [speakers, setSpeakers] = useState<Speaker[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+  const [moderationReports, setModerationReports] = useState<ModerationReport[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Load from localStorage if present
-  useEffect(() => {
+  const refreshData = useCallback(async () => {
     try {
-      const storedEpisodes = localStorage.getItem("gospel_episodes_store");
-      if (storedEpisodes) {
-        setEpisodes(JSON.parse(storedEpisodes));
-      } else {
-        localStorage.setItem(
-          "gospel_episodes_store",
-          JSON.stringify(
-            INITIAL_EPISODES.map((e) => ({
-              ...e,
-              status: "published" as PublicationStatus,
-            }))
-          )
-        );
-      }
+      const [epRes, sRes, spRes] = await Promise.all([
+        fetch("/api/episodes").then((r) => (r.ok ? r.json() : null)),
+        fetch("/api/series").then((r) => (r.ok ? r.json() : null)),
+        fetch("/api/speakers").then((r) => (r.ok ? r.json() : null)),
+      ]);
 
+      if (epRes?.episodes && Array.isArray(epRes.episodes)) {
+        setEpisodes(epRes.episodes);
+      }
+      if (sRes?.series && Array.isArray(sRes.series)) {
+        setSeriesList(sRes.series);
+      }
+      if (spRes?.speakers && Array.isArray(spRes.speakers)) {
+        setSpeakers(spRes.speakers);
+      }
+    } catch (err) {
+      console.warn("Failed to refresh podcast data:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Fetch initial data from APIs
+  useEffect(() => {
+    refreshData();
+
+    // Check stored audit logs for offline audit trails
+    try {
       const storedLogs = localStorage.getItem("gospel_audit_logs");
       if (storedLogs) {
         setAuditLogs(JSON.parse(storedLogs));
       }
     } catch {}
-  }, []);
+  }, [refreshData]);
 
   const saveEpisodes = (updated: Episode[]) => {
     setEpisodes(updated);
@@ -173,15 +142,14 @@ export function PodcastStoreProvider({
       if (!currentUser || !["editor", "admin", "super_admin"].includes(currentUser.role)) {
         return {
           success: false,
-          error: "Permission denied: Only editors and admins can create episodes.",
+          error: "Permission denied: Only creators, editors and admins can create episodes.",
         };
       }
 
-      // Editors cannot directly publish
       if (data.status === "published" && !canPublish) {
         return {
           success: false,
-          error: "Permission denied: Editors can only create drafts or submit for review. Publishing requires Admin rights.",
+          error: "Permission denied: Publishing requires Administrator rights.",
         };
       }
 
@@ -219,33 +187,36 @@ export function PodcastStoreProvider({
       id: string,
       updates: Partial<Episode>
     ): Promise<{ success: boolean; error?: string }> => {
-      if (!currentUser || !["editor", "admin", "super_admin"].includes(currentUser.role)) {
-        return { success: false, error: "Permission denied: Studio rights required." };
+      const existing = episodes.find((e) => e.id === id);
+      if (!existing) {
+        return { success: false, error: "Episode not found." };
       }
 
-      // Check if trying to publish without rights
-      if (updates.status === "published" && !canPublish) {
+      if (
+        updates.status === "published" &&
+        existing.status !== "published" &&
+        !canPublish
+      ) {
         return {
           success: false,
-          error: "Permission denied: Publishing requires Admin or Super Admin rights.",
+          error: "Permission denied: Publishing requires Administrator approval.",
         };
       }
 
-      const existing = episodes.find((e) => e.id === id);
-      if (!existing) return { success: false, error: "Episode not found." };
+      const updatedList = episodes.map((e) =>
+        e.id === id
+          ? {
+              ...e,
+              ...updates,
+              lastEditedById: currentUser?.id || e.lastEditedById,
+              lastEditedByName: currentUser?.displayName || e.lastEditedByName,
+              updatedAt: new Date().toISOString(),
+            }
+          : e
+      );
 
-      const updatedEpisode: Episode = {
-        ...existing,
-        ...updates,
-        lastEditedById: currentUser.id,
-        lastEditedByName: currentUser.displayName,
-        updatedAt: new Date().toISOString(),
-      };
-
-      const updatedList = episodes.map((e) => (e.id === id ? updatedEpisode : e));
       saveEpisodes(updatedList);
-
-      addAuditLog("UPDATE_EPISODE", "episode", id, updatedEpisode.title);
+      addAuditLog("UPDATE_EPISODE", "episode", id, existing.title, updates);
 
       return { success: true };
     },
@@ -254,47 +225,44 @@ export function PodcastStoreProvider({
 
   const publishEpisode = useCallback(
     async (id: string): Promise<{ success: boolean; error?: string }> => {
-      if (!currentUser || !canPublish) {
+      if (!canPublish) {
         return {
           success: false,
-          error: "Permission denied: Publishing requires Admin or Super Admin role.",
+          error: "Permission denied: Only administrators can approve and publish episodes.",
         };
       }
 
       const target = episodes.find((e) => e.id === id);
-      if (!target) return { success: false, error: "Episode not found." };
-
-      if (!target.audioUrl) {
-        return { success: false, error: "Cannot publish: No playable audio source attached." };
+      if (!target) {
+        return { success: false, error: "Episode not found." };
       }
 
       try {
         await fetch("/api/episodes/publish", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ episodeId: id, toStatus: "published" }),
+          body: JSON.stringify({ episodeId: id }),
         });
       } catch (err) {
-        console.warn("Server publishing call warning:", err);
+        console.warn("Server publish call warning:", err);
       }
 
-      const updatedEpisode: Episode = {
-        ...target,
-        status: "published",
-        publishedAt: new Date().toISOString(),
-        lastEditedById: currentUser.id,
-        lastEditedByName: currentUser.displayName,
-        updatedAt: new Date().toISOString(),
-      };
-
-      const updatedList = episodes.map((e) => (e.id === id ? updatedEpisode : e));
+      const updatedList = episodes.map((e) =>
+        e.id === id
+          ? {
+              ...e,
+              status: "published" as PublicationStatus,
+              publishedAt: new Date().toISOString(),
+            }
+          : e
+      );
       saveEpisodes(updatedList);
 
       addAuditLog("PUBLISH_EPISODE", "episode", id, target.title);
 
       return { success: true };
     },
-    [currentUser, episodes, canPublish, addAuditLog]
+    [canPublish, episodes, addAuditLog]
   );
 
   const scheduleEpisode = useCallback(
@@ -302,52 +270,50 @@ export function PodcastStoreProvider({
       id: string,
       publishAtUtc: string
     ): Promise<{ success: boolean; error?: string }> => {
-      if (!currentUser || !canPublish) {
+      if (!canPublish) {
         return {
           success: false,
-          error: "Permission denied: Scheduling publication requires Admin rights.",
+          error: "Permission denied: Scheduling requires Administrator approval.",
         };
       }
 
       const target = episodes.find((e) => e.id === id);
-      if (!target) return { success: false, error: "Episode not found." };
+      if (!target) {
+        return { success: false, error: "Episode not found." };
+      }
 
-      const updatedEpisode: Episode = {
-        ...target,
-        status: "scheduled",
-        scheduledPublishAt: publishAtUtc,
-        lastEditedById: currentUser.id,
-        lastEditedByName: currentUser.displayName,
-        updatedAt: new Date().toISOString(),
-      };
-
-      const updatedList = episodes.map((e) => (e.id === id ? updatedEpisode : e));
+      const updatedList = episodes.map((e) =>
+        e.id === id
+          ? {
+              ...e,
+              status: "scheduled" as PublicationStatus,
+              scheduledPublishAt: publishAtUtc,
+            }
+          : e
+      );
       saveEpisodes(updatedList);
 
-      addAuditLog("SCHEDULE_EPISODE", "episode", id, target.title, { publishAtUtc });
+      addAuditLog("SCHEDULE_EPISODE", "episode", id, target.title, {
+        publishAtUtc,
+      });
 
       return { success: true };
     },
-    [currentUser, episodes, canPublish, addAuditLog]
+    [canPublish, episodes, addAuditLog]
   );
 
   const archiveEpisode = useCallback(
     async (id: string): Promise<{ success: boolean; error?: string }> => {
-      if (!currentUser || !canPublish) {
-        return { success: false, error: "Permission denied: Admin rights required." };
+      if (!canPublish) {
+        return {
+          success: false,
+          error: "Permission denied: Archiving requires Administrator privileges.",
+        };
       }
 
       const target = episodes.find((e) => e.id === id);
-      if (!target) return { success: false, error: "Episode not found." };
-
-      try {
-        await fetch("/api/episodes/publish", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ episodeId: id, toStatus: "archived" }),
-        });
-      } catch (err) {
-        console.warn("Server archive call warning:", err);
+      if (!target) {
+        return { success: false, error: "Episode not found." };
       }
 
       const updatedList = episodes.map((e) =>
@@ -359,7 +325,7 @@ export function PodcastStoreProvider({
 
       return { success: true };
     },
-    [currentUser, episodes, canPublish, addAuditLog]
+    [canPublish, episodes, addAuditLog]
   );
 
   const deleteEpisode = useCallback(
@@ -405,10 +371,11 @@ export function PodcastStoreProvider({
     <PodcastStoreContext.Provider
       value={{
         episodes,
-        seriesList: SERIES_LIST,
-        speakers: SPEAKERS,
+        seriesList,
+        speakers,
         auditLogs,
         moderationReports,
+        isLoading,
         createEpisode,
         updateEpisode,
         publishEpisode,
@@ -418,6 +385,7 @@ export function PodcastStoreProvider({
         resolveReport,
         getEpisodeBySlug,
         getPublishedEpisodes,
+        refreshData,
       }}
     >
       {children}

@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { Radio, Play, Sparkles, BookOpen, ChevronRight, Flame } from "lucide-react";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
-import { EPISODES } from "@/data/mockData";
+import { usePodcastStore } from "@/context/PodcastStoreContext";
 import { AudioVisualizer } from "@/components/audio/AudioVisualizer";
 
 interface FrequencyBand {
@@ -56,16 +56,24 @@ const FREQUENCY_BANDS: FrequencyBand[] = [
 export function ScriptureFrequencyTuner() {
   const [selectedBand, setSelectedBand] = useState<FrequencyBand>(FREQUENCY_BANDS[0]);
   const { playEpisode, currentEpisode, isPlaying } = useAudioPlayer();
+  const { getPublishedEpisodes } = usePodcastStore();
+  const publishedEpisodes = getPublishedEpisodes();
+
+  const targetEpisode =
+    publishedEpisodes.length > 0
+      ? publishedEpisodes[selectedBand.episodeIndex % publishedEpisodes.length]
+      : null;
 
   const handleTuneAndListen = (band: FrequencyBand) => {
     setSelectedBand(band);
-    const targetEpisode = EPISODES[band.episodeIndex] || EPISODES[0];
-    playEpisode(targetEpisode);
+    if (publishedEpisodes.length > 0) {
+      const ep = publishedEpisodes[band.episodeIndex % publishedEpisodes.length];
+      playEpisode(ep);
+    }
   };
 
   const isCurrentPlaying =
-    currentEpisode &&
-    currentEpisode.id === (EPISODES[selectedBand.episodeIndex]?.id);
+    Boolean(currentEpisode && targetEpisode && currentEpisode.id === targetEpisode.id && isPlaying);
 
   return (
     <section className="px-4 md:px-8">

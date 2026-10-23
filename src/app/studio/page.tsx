@@ -26,7 +26,6 @@ import {
 } from "lucide-react";
 import { usePodcastStore } from "@/context/PodcastStoreContext";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
-import { EPISODES } from "@/data/mockData";
 
 export default function ArtistStudioDashboard() {
   const { episodes } = usePodcastStore();
@@ -39,11 +38,13 @@ export default function ArtistStudioDashboard() {
     totalFollowers: number;
     totalDownloads: number;
   }>({
-    totalPlays: 12580,
-    uniqueListeners: 2340,
-    totalFollowers: 892,
-    totalDownloads: 1450,
+    totalPlays: 0,
+    uniqueListeners: 0,
+    totalFollowers: 0,
+    totalDownloads: 0,
   });
+
+  const [topEpisodes, setTopEpisodes] = useState<any[]>([]);
 
   React.useEffect(() => {
     fetch("/api/analytics/creator-stats")
@@ -54,27 +55,17 @@ export default function ArtistStudioDashboard() {
             totalPlays: data.totalPlays,
             uniqueListeners: data.uniqueListeners || 0,
             totalFollowers: data.totalFollowers || 0,
-            totalDownloads: data.totalDownloads || Math.round(data.totalPlays * 0.15),
+            totalDownloads: data.totalDownloads || 0,
           });
+          if (data.topEpisodes) {
+            setTopEpisodes(data.topEpisodes);
+          }
         }
       })
       .catch(() => {});
   }, []);
 
-  const latestEpisodes = [
-    { ep: EPISODES[0], status: "Published", plays: "2.4K", date: "Oct 12, 2024" },
-    { ep: EPISODES[1], status: "Published", plays: "1.8K", date: "Oct 5, 2024" },
-    { ep: EPISODES[3], status: "Published", plays: "3.2K", date: "Sep 21, 2024" },
-    { ep: EPISODES[2], status: "Scheduled", plays: "—", date: "Oct 28, 2024" },
-  ];
-
-  const topEpisodes = [
-    { ep: EPISODES[3], rank: 1, plays: "3.2K plays" },
-    { ep: EPISODES[0], rank: 2, plays: "2.4K plays" },
-    { ep: EPISODES[1], rank: 3, plays: "1.8K plays" },
-    { ep: EPISODES[4], rank: 4, plays: "1.1K plays" },
-    { ep: EPISODES[6], rank: 5, plays: "980 plays" },
-  ];
+  const latestEpisodes = episodes.slice(0, 4);
 
   const recentActivity = [
     {
@@ -405,48 +396,60 @@ export default function ArtistStudioDashboard() {
             </Link>
           </div>
 
-          <div className="divide-y divide-[#1e1d21] text-xs">
-            {latestEpisodes.map((item) => (
-              <div key={item.ep.id} className="py-2.5 flex items-center justify-between gap-3 group">
-                <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                  <div className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0 border border-[#262429]">
-                    <Image src={item.ep.artworkUrl} alt={item.ep.title} fill className="object-cover" />
+          {latestEpisodes.length === 0 ? (
+            <div className="py-8 text-center text-xs text-[#a5a6af] space-y-3">
+              <p>No episodes uploaded yet.</p>
+              <Link
+                href="/studio/episodes/new"
+                className="inline-block px-4 py-1.5 rounded-full bg-[#ff4500] text-black font-heading font-bold text-xs uppercase tracking-wider hover:bg-[#e63900] transition-colors"
+              >
+                Upload First Episode
+              </Link>
+            </div>
+          ) : (
+            <div className="divide-y divide-[#1e1d21] text-xs">
+              {latestEpisodes.map((ep) => (
+                <div key={ep.id} className="py-2.5 flex items-center justify-between gap-3 group">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                    <div className="relative w-9 h-9 rounded-lg overflow-hidden shrink-0 border border-[#262429]">
+                      <Image src={ep.artworkUrl} alt={ep.title} fill className="object-cover" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-heading text-xs font-semibold text-white truncate group-hover:text-[#ffb13b]">
+                        {ep.title}
+                      </p>
+                      <p className="text-[10px] text-[#6e6f77] font-mono">
+                        {ep.publishedAt ? new Date(ep.publishedAt).toLocaleDateString() : "Draft"}
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-heading text-xs font-semibold text-white truncate group-hover:text-[#ffb13b]">
-                      {item.ep.title}
-                    </p>
-                    <p className="text-[10px] text-[#6e6f77] font-mono">
-                      {item.ep.publishedAt.slice(0, 10)}
-                    </p>
+
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span
+                      className={`text-[9px] font-mono px-2 py-0.5 rounded-full ${
+                        ep.status === "published"
+                          ? "bg-emerald-950/60 text-emerald-400 border border-emerald-500/30"
+                          : "bg-[#251f15] text-[#ffb13b] border border-[#ffb13b]/30"
+                      }`}
+                    >
+                      ● {ep.status || "draft"}
+                    </span>
+
+                    <span className="text-[10px] font-mono text-[#a5a6af] w-8 text-right">
+                      {ep.playCount || 0}
+                    </span>
+
+                    <button
+                      onClick={(e) => handlePlay(e, ep)}
+                      className="w-6 h-6 rounded-full bg-[#f5a623] hover:bg-[#ffb13b] text-black flex items-center justify-center shrink-0 shadow-sm"
+                    >
+                      <Play className="w-3 h-3 fill-current ml-0.5" />
+                    </button>
                   </div>
                 </div>
-
-                <div className="flex items-center gap-3 shrink-0">
-                  <span
-                    className={`text-[9px] font-mono px-2 py-0.5 rounded-full ${
-                      item.status === "Published"
-                        ? "bg-emerald-950/60 text-emerald-400 border border-emerald-500/30"
-                        : "bg-[#251f15] text-[#ffb13b] border border-[#ffb13b]/30"
-                    }`}
-                  >
-                    ● {item.status}
-                  </span>
-
-                  <span className="text-[10px] font-mono text-[#a5a6af] w-8 text-right">
-                    {item.plays}
-                  </span>
-
-                  <button
-                    onClick={(e) => handlePlay(e, item.ep)}
-                    className="w-6 h-6 rounded-full bg-[#f5a623] hover:bg-[#ffb13b] text-black flex items-center justify-center shrink-0 shadow-sm"
-                  >
-                    <Play className="w-3 h-3 fill-current ml-0.5" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Top Episodes Ranked (col-span-4) */}
@@ -461,33 +464,39 @@ export default function ArtistStudioDashboard() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            {topEpisodes.map((item) => (
-              <div
-                key={item.ep.id}
-                className="flex items-center gap-3 p-2 rounded-xl bg-[#151417] hover:bg-[#1a191d] border border-[#201f23] transition-colors group cursor-pointer"
-                onClick={(e) => handlePlay(e, item.ep)}
-              >
-                <span className="font-mono text-xs font-bold text-[#6e6f77] w-3 text-center">
-                  {item.rank}
-                </span>
-                <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-[#262429]">
-                  <Image src={item.ep.artworkUrl} alt={item.ep.title} fill className="object-cover" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-heading text-xs font-semibold text-white group-hover:text-[#ffb13b] truncate">
-                    {item.ep.title}
-                  </p>
-                  <p className="text-[10px] text-[#6e6f77] font-mono">{item.plays}</p>
-                </div>
-                <button
-                  className="w-6 h-6 rounded-full bg-[#f5a623] hover:bg-[#ffb13b] text-black flex items-center justify-center shrink-0 shadow-sm"
+          {topEpisodes.length === 0 ? (
+            <div className="py-8 text-center text-xs text-[#a5a6af]">
+              Top episodes will appear here once listeners stream your teachings.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {topEpisodes.map((item, idx) => (
+                <div
+                  key={item.id || idx}
+                  className="flex items-center gap-3 p-2 rounded-xl bg-[#151417] hover:bg-[#1a191d] border border-[#201f23] transition-colors group cursor-pointer"
+                  onClick={(e) => handlePlay(e, item)}
                 >
-                  <Play className="w-3 h-3 fill-current ml-0.5" />
-                </button>
-              </div>
-            ))}
-          </div>
+                  <span className="font-mono text-xs font-bold text-[#6e6f77] w-3 text-center">
+                    {item.rank || idx + 1}
+                  </span>
+                  <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-[#262429]">
+                    <Image src={item.artworkUrl} alt={item.title} fill className="object-cover" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-heading text-xs font-semibold text-white group-hover:text-[#ffb13b] truncate">
+                      {item.title}
+                    </p>
+                    <p className="text-[10px] text-[#6e6f77] font-mono">{item.plays} plays</p>
+                  </div>
+                  <button
+                    className="w-6 h-6 rounded-full bg-[#f5a623] hover:bg-[#ffb13b] text-black flex items-center justify-center shrink-0 shadow-sm"
+                  >
+                    <Play className="w-3 h-3 fill-current ml-0.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Recent Activity Feed (col-span-3) */}
@@ -501,25 +510,8 @@ export default function ArtistStudioDashboard() {
             </Link>
           </div>
 
-          <div className="space-y-3 text-xs">
-            {recentActivity.map((act, i) => {
-              const Icon = act.icon;
-              return (
-                <div key={i} className="flex items-start gap-2.5">
-                  <div className={`p-1.5 rounded-lg bg-[#181619] border border-[#262429] ${act.color} shrink-0 mt-0.5`}>
-                    <Icon className="w-3.5 h-3.5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-white text-[11px] leading-tight font-medium">
-                      {act.text}
-                    </p>
-                    <span className="text-[9px] font-mono text-[#6e6f77] mt-0.5 block">
-                      {act.time}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+          <div className="py-8 text-center text-xs text-[#a5a6af]">
+            No recent activity recorded yet.
           </div>
         </div>
       </div>

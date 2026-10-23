@@ -43,73 +43,33 @@ export default function AdminDashboardPage() {
   >("creators");
 
   const [adminMetrics, setAdminMetrics] = useState({
-    totalUsers: 12580,
-    activeListeners: 8240,
-    verifiedCreators: 340,
-    totalEpisodes: 124,
-    pendingApplicationsCount: 5,
-    totalPlays: 148900,
+    totalUsers: 0,
+    activeListeners: 0,
+    verifiedCreators: 0,
+    totalEpisodes: 0,
+    pendingApplicationsCount: 0,
+    totalPlays: 0,
   });
 
-  // Pending Creators state
-  const [pendingCreators, setPendingCreators] = useState([
-    {
-      id: "app-1",
-      name: "Sarah Mitchell",
-      role: "Worship Artist",
-      time: "2 days ago",
-      avatar:
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
-    },
-    {
-      id: "app-2",
-      name: "Daniel Brooks",
-      role: "Podcast Creator",
-      time: "3 days ago",
-      avatar:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80",
-    },
-    {
-      id: "app-3",
-      name: "Grace Thomas",
-      role: "Music Ministry",
-      time: "4 days ago",
-      avatar:
-        "https://images.unsplash.com/photo-1517841905240-472988babdf9?w=120&auto=format&fit=crop&q=80",
-    },
-    {
-      id: "app-4",
-      name: "Michael Chen",
-      role: "Speaker",
-      time: "5 days ago",
-      avatar:
-        "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=80",
-    },
-    {
-      id: "app-5",
-      name: "Emily Carter",
-      role: "Podcast Creator",
-      time: "5 days ago",
-      avatar:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80",
-    },
-  ]);
+  const [pendingCreators, setPendingCreators] = useState<any[]>([]);
+  const [isSeeding, setIsSeeding] = useState(false);
+  const [seedStatus, setSeedStatus] = useState<string | null>(null);
 
-  React.useEffect(() => {
+  const fetchAdminStats = React.useCallback(() => {
     fetch("/api/analytics/admin-stats")
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && typeof data.totalUsers === "number") {
           setAdminMetrics({
             totalUsers: data.totalUsers,
-            activeListeners: data.activeListeners,
-            verifiedCreators: data.verifiedCreators,
-            totalEpisodes: data.totalEpisodes,
-            pendingApplicationsCount: data.pendingApplicationsCount,
-            totalPlays: data.totalPlays,
+            activeListeners: data.activeListeners || 0,
+            verifiedCreators: data.verifiedCreators || 0,
+            totalEpisodes: data.totalEpisodes || 0,
+            pendingApplicationsCount: data.pendingApplicationsCount || 0,
+            totalPlays: data.totalPlays || 0,
           });
 
-          if (data.pendingApplications && data.pendingApplications.length > 0) {
+          if (data.pendingApplications) {
             setPendingCreators(
               data.pendingApplications.map((app: any) => ({
                 id: app.id,
@@ -126,6 +86,29 @@ export default function AdminDashboardPage() {
       })
       .catch(() => {});
   }, []);
+
+  React.useEffect(() => {
+    fetchAdminStats();
+  }, [fetchAdminStats]);
+
+  const handleSeedDatabase = async () => {
+    setIsSeeding(true);
+    setSeedStatus(null);
+    try {
+      const res = await fetch("/api/seed", { method: "POST" });
+      const data = await res.json();
+      if (data?.success) {
+        setSeedStatus(data.message || "Platform content populated!");
+        fetchAdminStats();
+      } else {
+        setSeedStatus(data?.error || "Seeding failed.");
+      }
+    } catch {
+      setSeedStatus("Failed to seed content.");
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   const handleApprove = async (id: string) => {
     setPendingCreators((prev) => prev.filter((c) => c.id !== id));
@@ -617,6 +600,25 @@ export default function AdminDashboardPage() {
               </div>
               <span>Manage Categories</span>
             </Link>
+
+            <button
+              onClick={handleSeedDatabase}
+              disabled={isSeeding}
+              className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#221711] hover:bg-[#2e1d15] border border-[#ff4500]/40 text-xs font-semibold text-[#ffb13b] transition-all group disabled:opacity-50 text-left"
+            >
+              <div className="p-2 rounded-lg bg-[#331c12] text-[#ff4500]">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <span className="block text-white font-bold">{isSeeding ? "Populating Fixtures..." : "Seed Platform Content"}</span>
+                <span className="text-[10px] text-[#a5a6af] block">Populate initial series & speakers</span>
+              </div>
+            </button>
+            {seedStatus && (
+              <p className="text-[11px] font-mono text-emerald-400 p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30">
+                {seedStatus}
+              </p>
+            )}
           </div>
         </div>
       </div>
@@ -651,94 +653,65 @@ export default function AdminDashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#1e1c22]">
-                {[
-                  {
-                    title: "Purpose in the Process",
-                    duration: "45:20",
-                    creator: "The Forge Podcast",
-                    status: "Published",
-                    plays: "2.4K",
-                    date: "Oct 12, 2024",
-                    artwork: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80",
-                  },
-                  {
-                    title: "Faith Over Fear",
-                    duration: "38:15",
-                    creator: "Faith in Action",
-                    status: "Published",
-                    plays: "1.8K",
-                    date: "Oct 5, 2024",
-                    artwork: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&auto=format&fit=crop&q=80",
-                  },
-                  {
-                    title: "A Life That Matters",
-                    duration: "52:17",
-                    creator: "Kingdom Minds",
-                    status: "Scheduled",
-                    plays: "-",
-                    date: "Oct 28, 2024",
-                    artwork: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=400&auto=format&fit=crop&q=80",
-                  },
-                  {
-                    title: "Finding God in the Ordinary",
-                    duration: "41:03",
-                    creator: "Everyday Grace",
-                    status: "Published",
-                    plays: "3.2K",
-                    date: "Sep 21, 2024",
-                    artwork: "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=400&auto=format&fit=crop&q=80",
-                  },
-                ].map((ep) => (
-                  <tr key={ep.title} className="hover:bg-[#161519] transition-colors">
-                    <td className="py-2.5 pr-2">
-                      <div className="flex items-center gap-2">
-                        <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0">
-                          <Image
-                            src={ep.artwork}
-                            alt={ep.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-white truncate max-w-[120px]">
-                            {ep.title}
-                          </p>
-                          <span className="text-[10px] text-[#6e6f77] font-mono">
-                            {ep.duration}
-                          </span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-2.5 text-[#a5a6af] text-[11px] truncate max-w-[90px]">
-                      {ep.creator}
-                    </td>
-                    <td className="py-2.5">
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono",
-                          ep.status === "Published"
-                            ? "bg-emerald-950/70 text-emerald-400 border border-emerald-500/30"
-                            : "bg-amber-950/70 text-[#ffb13b] border border-amber-500/30"
-                        )}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                        {ep.status}
-                      </span>
-                    </td>
-                    <td className="py-2.5 font-mono text-white text-[11px]">
-                      {ep.plays}
-                    </td>
-                    <td className="py-2.5 text-[#6e6f77] text-[10px] font-mono whitespace-nowrap">
-                      {ep.date}
-                    </td>
-                    <td className="py-2.5 text-right">
-                      <button className="p-1 rounded hover:bg-[#222] text-[#6e6f77] hover:text-white">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                {episodes.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-xs text-[#a5a6af]">
+                      No episodes found in database.
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  episodes.slice(0, 5).map((ep) => (
+                    <tr key={ep.id} className="hover:bg-[#161519] transition-colors">
+                      <td className="py-2.5 pr-2">
+                        <div className="flex items-center gap-2">
+                          <div className="relative w-8 h-8 rounded-lg overflow-hidden shrink-0">
+                            <Image
+                              src={ep.artworkUrl}
+                              alt={ep.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-bold text-white truncate max-w-[120px]">
+                              {ep.title}
+                            </p>
+                            <span className="text-[10px] text-[#6e6f77] font-mono">
+                              {Math.round((ep.durationSeconds || 0) / 60)}m
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-2.5 text-[#a5a6af] text-[11px] truncate max-w-[90px]">
+                        {ep.seriesTitle}
+                      </td>
+                      <td className="py-2.5">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold font-mono",
+                            ep.status === "published"
+                              ? "bg-emerald-950/70 text-emerald-400 border border-emerald-500/30"
+                              : "bg-amber-950/70 text-[#ffb13b] border border-amber-500/30"
+                          )}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                          {ep.status || "draft"}
+                        </span>
+                      </td>
+                      <td className="py-2.5 font-mono text-white text-[11px]">
+                        {ep.playCount || 0}
+                      </td>
+                      <td className="py-2.5 text-[#6e6f77] text-[10px] font-mono whitespace-nowrap">
+                        {ep.publishedAt ? new Date(ep.publishedAt).toLocaleDateString() : "Draft"}
+                      </td>
+                      <td className="py-2.5 text-right">
+                        <button className="p-1 rounded hover:bg-[#222] text-[#6e6f77] hover:text-white">
+                          <MoreHorizontal className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
@@ -798,46 +771,66 @@ export default function AdminDashboardPage() {
 
           {/* Creators List */}
           <div className="space-y-3">
-            {pendingCreators.map((creator) => (
-              <div
-                key={creator.id}
-                className="flex items-center justify-between p-2 rounded-xl hover:bg-[#161519] transition-colors"
-              >
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0">
-                    <Image
-                      src={creator.avatar}
-                      alt={creator.name}
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-white truncate">
-                      {creator.name}
-                    </p>
-                    <span className="text-[10px] text-[#6e6f77] block truncate">
-                      {creator.role} • {creator.time}
-                    </span>
-                  </div>
+            {activeApprovalTab === "creators" && (
+              pendingCreators.length === 0 ? (
+                <div className="py-8 text-center text-xs text-[#a5a6af]">
+                  No pending creator applications. All requests reviewed.
                 </div>
+              ) : (
+                pendingCreators.map((creator) => (
+                  <div
+                    key={creator.id}
+                    className="flex items-center justify-between p-2 rounded-xl hover:bg-[#161519] transition-colors"
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="relative w-8 h-8 rounded-full overflow-hidden shrink-0">
+                        <Image
+                          src={creator.avatar}
+                          alt={creator.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-white truncate">
+                          {creator.name}
+                        </p>
+                        <span className="text-[10px] text-[#6e6f77] block truncate">
+                          {creator.role} • {creator.time}
+                        </span>
+                      </div>
+                    </div>
 
-                <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                  <button
-                    onClick={() => handleApprove(creator.id)}
-                    className="px-2.5 py-1 rounded-md bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-400 text-[11px] font-bold transition-all"
-                  >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => handleReject(creator.id)}
-                    className="px-2.5 py-1 rounded-md bg-red-950/80 hover:bg-red-900 border border-red-500/50 text-red-400 text-[11px] font-bold transition-all"
-                  >
-                    Reject
-                  </button>
-                </div>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      <button
+                        onClick={() => handleApprove(creator.id)}
+                        className="px-2.5 py-1 rounded-md bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-400 text-[11px] font-bold transition-all"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleReject(creator.id)}
+                        className="px-2.5 py-1 rounded-md bg-red-950/80 hover:bg-red-900 border border-red-500/50 text-red-400 text-[11px] font-bold transition-all"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )
+            )}
+
+            {activeApprovalTab === "episodes" && (
+              <div className="py-8 text-center text-xs text-[#a5a6af]">
+                No submitted episodes currently awaiting editorial review.
               </div>
-            ))}
+            )}
+
+            {activeApprovalTab === "comments" && (
+              <div className="py-8 text-center text-xs text-[#a5a6af]">
+                No community discussions or comments flagged for moderation.
+              </div>
+            )}
           </div>
         </div>
 

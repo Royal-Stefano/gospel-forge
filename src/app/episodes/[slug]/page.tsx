@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -26,7 +26,6 @@ import { usePodcastStore } from "@/context/PodcastStoreContext";
 import { useAuth } from "@/context/AuthContext";
 import { formatTime, cn } from "@/lib/utils";
 import { AudioVisualizer } from "@/components/audio/AudioVisualizer";
-import { EPISODES } from "@/data/mockData";
 
 export default function EpisodeDetailPage() {
   const params = useParams();
@@ -35,7 +34,25 @@ export default function EpisodeDetailPage() {
   const { currentUser, openAuthModal } = useAuth();
   const { getEpisodeBySlug, getPublishedEpisodes } = usePodcastStore();
   const publishedEpisodes = getPublishedEpisodes();
-  const episode = getEpisodeBySlug(slug) || publishedEpisodes[0] || EPISODES[0];
+
+  const [remoteEpisode, setRemoteEpisode] = useState<any>(null);
+  const [fetchAttempted, setFetchAttempted] = useState(false);
+
+  const episode = getEpisodeBySlug(slug) || remoteEpisode;
+
+  useEffect(() => {
+    if (!episode && slug) {
+      fetch(`/api/episodes?slug=${encodeURIComponent(slug)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.episodes && data.episodes.length > 0) {
+            setRemoteEpisode(data.episodes[0]);
+          }
+        })
+        .catch(() => {})
+        .finally(() => setFetchAttempted(true));
+    }
+  }, [episode, slug]);
 
   const {
     currentEpisode,
@@ -60,15 +77,36 @@ export default function EpisodeDetailPage() {
   >("about");
   const [autoplay, setAutoplay] = useState(true);
 
+  if (!episode) {
+    return (
+      <div className="px-4 md:px-8 py-20 text-center space-y-4 max-w-md mx-auto">
+        <h2 className="font-heading text-xl font-bold text-white">
+          {fetchAttempted ? "Episode Not Found" : "Loading Episode..."}
+        </h2>
+        <p className="text-xs text-[#a5a6af]">
+          {fetchAttempted
+            ? "The podcast episode you requested is unavailable or has not been published."
+            : "Locating audio file and show notes..."}
+        </p>
+        <Link
+          href="/browse"
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-[#ff4500] text-black font-heading font-bold text-xs uppercase tracking-wider hover:bg-[#e63900] transition-colors"
+        >
+          <span>Browse Episodes</span>
+        </Link>
+      </div>
+    );
+  }
+
   const isCurrent = currentEpisode?.id === episode.id;
   const isPlayingCurrent = isCurrent && isPlaying;
   const isSaved = isEpisodeSaved(episode.id);
 
-  // Up Next episodes (episodes 2 to 5)
-  const upNextEpisodes = EPISODES.filter((ep) => ep.id !== episode.id).slice(0, 4);
+  // Up Next episodes from published list
+  const upNextEpisodes = publishedEpisodes.filter((ep) => ep.id !== episode.id).slice(0, 4);
 
-  // Related episodes (episodes 7 to 10)
-  const relatedEpisodes = EPISODES.slice(6, 10);
+  // Related episodes from published list
+  const relatedEpisodes = publishedEpisodes.filter((ep) => ep.id !== episode.id).slice(4, 8);
 
   const handlePlayToggle = () => {
     if (isCurrent) {
@@ -408,7 +446,7 @@ export default function EpisodeDetailPage() {
             <div>
               <span className="text-[#6e6f77] block text-[11px]">Topics</span>
               <div className="flex flex-wrap gap-1.5 mt-1">
-                {episode.topics.map((t) => (
+                {(episode.topics || []).map((t: string) => (
                   <span
                     key={t}
                     className="px-2 py-0.5 rounded-md bg-[#18171b] text-[#a5a6af] text-[10px] border border-[#26242a]"

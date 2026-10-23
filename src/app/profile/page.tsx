@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -19,7 +19,6 @@ import {
   AlertCircle,
   ExternalLink,
 } from "lucide-react";
-import { USER_PLAYLISTS, EPISODES } from "@/data/mockData";
 import { EpisodeCard } from "@/components/podcast/EpisodeCard";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
@@ -29,6 +28,24 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<
     "playlists" | "saved" | "history"
   >("playlists");
+
+  const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
+  const [userSavedEpisodes, setUserSavedEpisodes] = useState<any[]>([]);
+  const [userHistory, setUserHistory] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    fetch("/api/library")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.authenticated) {
+          setUserPlaylists(data.playlists || []);
+          setUserSavedEpisodes(data.savedEpisodes || []);
+          setUserHistory((data.listeningProgress || []).map((p: any) => p.episode).filter(Boolean));
+        }
+      })
+      .catch(() => {});
+  }, [currentUser]);
 
   if (!currentUser) {
     return (
@@ -179,52 +196,59 @@ export default function ProfilePage() {
 
       {/* TAB CONTENT: PLAYLISTS */}
       {activeTab === "playlists" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in">
-          {USER_PLAYLISTS.map((playlist) => (
-            <div
-              key={playlist.id}
-              className="group p-4 rounded-2xl bg-[#121113] hover:bg-[#1a191b] border border-[#222123] hover:border-[#ff4500]/40 transition-all flex items-center gap-4 cursor-pointer"
-            >
-              <div className="relative w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-[#2a2929]">
-                <Image
-                  src={playlist.coverUrl || "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80"}
-                  alt={playlist.title}
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform"
-                />
+        userPlaylists.length === 0 ? (
+          <div className="p-8 rounded-2xl bg-[#121113] border border-[#222123] text-center text-xs text-[#a5a6af]">
+            No playlists created yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 animate-in fade-in">
+            {userPlaylists.map((playlist) => (
+              <div
+                key={playlist.id}
+                className="group p-4 rounded-2xl bg-[#121113] hover:bg-[#1a191b] border border-[#222123] hover:border-[#ff4500]/40 transition-all flex items-center gap-4 cursor-pointer"
+              >
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-sm font-bold text-white group-hover:text-[#ffb13b] transition-colors truncate">
+                    {playlist.title}
+                  </h4>
+                  <p className="text-xs text-[#a5a6af] line-clamp-1 mt-0.5">
+                    {playlist.description || "Custom playlist"}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <h4 className="text-sm font-bold text-white group-hover:text-[#ffb13b] transition-colors truncate">
-                  {playlist.title}
-                </h4>
-                <p className="text-xs text-[#a5a6af] line-clamp-1 mt-0.5">
-                  {playlist.description}
-                </p>
-                <span className="text-[10px] font-mono text-[#6e6f77] mt-1 block">
-                  {playlist.itemCount} episodes
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )
       )}
 
       {/* TAB CONTENT: SAVED EPISODES */}
       {activeTab === "saved" && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in">
-          {EPISODES.slice(0, 3).map((episode) => (
-            <EpisodeCard key={episode.id} episode={episode} variant="vertical" />
-          ))}
-        </div>
+        userSavedEpisodes.length === 0 ? (
+          <div className="p-8 rounded-2xl bg-[#121113] border border-[#222123] text-center text-xs text-[#a5a6af]">
+            No saved episodes yet.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in">
+            {userSavedEpisodes.map((episode) => (
+              <EpisodeCard key={episode.id} episode={episode} variant="vertical" />
+            ))}
+          </div>
+        )
       )}
 
       {/* TAB CONTENT: LISTENING HISTORY */}
       {activeTab === "history" && (
-        <div className="space-y-3 animate-in fade-in">
-          {EPISODES.map((episode) => (
-            <EpisodeCard key={episode.id} episode={episode} variant="horizontal" />
-          ))}
-        </div>
+        userHistory.length === 0 ? (
+          <div className="p-8 rounded-2xl bg-[#121113] border border-[#222123] text-center text-xs text-[#a5a6af]">
+            No listening history yet.
+          </div>
+        ) : (
+          <div className="space-y-3 animate-in fade-in">
+            {userHistory.map((episode) => (
+              <EpisodeCard key={episode.id} episode={episode} variant="horizontal" />
+            ))}
+          </div>
+        )
       )}
     </div>
   );

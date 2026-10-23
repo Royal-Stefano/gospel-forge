@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createSupabaseServerClient();
     const { searchParams } = new URL(request.url);
 
+    const slug = searchParams.get("slug");
     const seriesId = searchParams.get("seriesId");
     const category = searchParams.get("category");
     const query = searchParams.get("q");
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
           slug,
           description,
           show_notes,
+          transcript,
           audio_url,
           artwork_url,
           audio_duration_seconds,
@@ -44,6 +46,10 @@ export async function GET(request: NextRequest) {
         .order("published_at", { ascending: false })
         .limit(limit);
 
+      if (slug) {
+        dbQuery = dbQuery.eq("slug", slug);
+      }
+
       if (seriesId) {
         dbQuery = dbQuery.eq("series_id", seriesId);
       }
@@ -62,14 +68,35 @@ export async function GET(request: NextRequest) {
       }
 
       if (!error && data) {
-        // In production, database is source of truth; if empty, return empty list
-        if (data.length > 0 || process.env.NODE_ENV === "production") {
-          return NextResponse.json({
-            episodes: data,
-            total: data.length,
-            source: "database",
-          });
-        }
+        const formatted = data.map((ep: any) => ({
+          id: ep.id,
+          seriesId: ep.series_id,
+          seriesTitle: ep.series_title,
+          title: ep.title,
+          slug: ep.slug,
+          description: ep.description,
+          showNotes: ep.show_notes,
+          transcript: ep.transcript,
+          audioUrl: ep.audio_url,
+          artworkUrl: ep.artwork_url,
+          durationSeconds: ep.audio_duration_seconds,
+          publishedAt: ep.published_at,
+          episodeNumber: ep.episode_number,
+          seasonNumber: ep.season_number,
+          playCount: ep.play_count,
+          likesCount: ep.likes_count,
+          featured: ep.featured,
+          topics: ep.topics || [],
+          scriptureReferences: ep.scripture_references || [],
+          speaker: ep.speaker,
+          status: "published",
+        }));
+
+        return NextResponse.json({
+          episodes: formatted,
+          total: formatted.length,
+          source: "database",
+        });
       }
     }
 

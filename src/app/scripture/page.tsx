@@ -3,9 +3,9 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { BookOpen, ChevronRight, Search, Radio, Sparkles, Filter } from "lucide-react";
-import { EPISODES } from "@/data/mockData";
 import { EpisodeCard } from "@/components/podcast/EpisodeCard";
 import { AudioVisualizer } from "@/components/audio/AudioVisualizer";
+import { usePodcastStore } from "@/context/PodcastStoreContext";
 
 const SCRIPTURE_TOPICS = [
   {
@@ -83,6 +83,8 @@ const SCRIPTURE_TOPICS = [
 ];
 
 export default function ScripturePage() {
+  const { getPublishedEpisodes } = usePodcastStore();
+  const publishedEpisodes = getPublishedEpisodes();
   const [selectedTopic, setSelectedTopic] = useState(SCRIPTURE_TOPICS[0]);
   const [searchQuery, setSearchQuery] = useState("");
   const [testamentFilter, setTestamentFilter] = useState<"ALL" | "OT" | "NT">("ALL");
@@ -212,11 +214,17 @@ export default function ScripturePage() {
             <Sparkles className="w-4 h-4 text-[#ff4500]" />
             Broadcasting Episodes Anchored in {selectedTopic.passage}
           </h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {EPISODES.slice(0, 4).map((ep) => (
-              <EpisodeCard key={ep.id} episode={ep} variant="vertical" />
-            ))}
-          </div>
+          {publishedEpisodes.length === 0 ? (
+            <div className="p-8 rounded-2xl bg-[#121113] border border-[#222125] text-center text-xs text-[#a5a6af]">
+              No published episodes anchored in this passage yet.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {publishedEpisodes.slice(0, 4).map((ep) => (
+                <EpisodeCard key={ep.id} episode={ep} variant="vertical" />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

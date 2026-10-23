@@ -5,10 +5,12 @@ import { VolcanicSummitCathedral } from "@/components/brand/VolcanicSummitCathed
 import Link from "next/link";
 import { Play, Music, Users, BookOpen, Heart } from "lucide-react";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
-import { EPISODES } from "@/data/mockData";
+import { usePodcastStore } from "@/context/PodcastStoreContext";
 
 export function CinematicHero() {
   const { playEpisode } = useAudioPlayer();
+  const { getPublishedEpisodes } = usePodcastStore();
+  const publishedEpisodes = getPublishedEpisodes();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Subtle floating ember particles effect
@@ -87,7 +89,11 @@ export function CinematicHero() {
   }, []);
 
   const handleStartListening = () => {
-    playEpisode(EPISODES[0]);
+    if (publishedEpisodes.length > 0) {
+      playEpisode(publishedEpisodes[0]);
+    } else {
+      window.location.href = "/browse";
+    }
   };
 
   return (

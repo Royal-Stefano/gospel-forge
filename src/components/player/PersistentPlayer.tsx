@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import {
   Play,
   Pause,
+  Loader2,
+  AlertCircle,
   SkipBack,
   SkipForward,
   Shuffle,
@@ -28,6 +30,9 @@ export function PersistentPlayer() {
   const {
     currentEpisode,
     isPlaying,
+    isLoading,
+    isBuffering,
+    playbackError,
     currentTime,
     duration,
     volume,
@@ -160,10 +165,13 @@ export function PersistentPlayer() {
             {/* Red / Orange Circular Glowing Play/Pause Button */}
             <button
               onClick={togglePlay}
-              className="relative p-2.5 sm:p-3 rounded-full bg-gradient-to-r from-[#ff4500] to-[#e63900] text-white shadow-[0_0_20px_rgba(255,69,0,0.6)] hover:scale-105 active:scale-95 transition-all duration-200"
+              disabled={isLoading}
+              className="relative p-2.5 sm:p-3 rounded-full bg-gradient-to-r from-[#ff4500] to-[#e63900] text-white shadow-[0_0_20px_rgba(255,69,0,0.6)] hover:scale-105 active:scale-95 transition-all duration-200 disabled:opacity-80"
               title={isPlaying ? "Pause" : "Play"}
             >
-              {isPlaying ? (
+              {isLoading || isBuffering ? (
+                <Loader2 className="w-4 h-4 animate-spin text-white" />
+              ) : isPlaying ? (
                 <Pause className="w-4 h-4 fill-current" />
               ) : (
                 <Play className="w-4 h-4 fill-current ml-0.5" />
@@ -191,6 +199,12 @@ export function PersistentPlayer() {
           </div>
 
           {/* Scrubber row with elapsed, golden line & duration */}
+          {playbackError && (
+            <div className="flex items-center gap-1.5 text-[10px] text-amber-400 font-mono -mt-1 mb-0.5">
+              <AlertCircle className="w-3 h-3 text-amber-400 shrink-0" />
+              <span>{playbackError}</span>
+            </div>
+          )}
           <div className="w-full flex items-center gap-3">
             <span className="text-[11px] font-mono text-[#a5a6af] w-10 text-right tabular-nums">
               {formatTime(currentTime)}
