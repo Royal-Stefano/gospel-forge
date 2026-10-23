@@ -15,7 +15,8 @@ import {
   Flame,
   CheckCircle,
 } from "lucide-react";
-import { COMMUNITY_POSTS, CURRENT_USER, EPISODES } from "@/data/mockData";
+import { useAuth } from "@/context/AuthContext";
+import { COMMUNITY_POSTS, EPISODES } from "@/data/mockData";
 import { CommunityPost } from "@/types";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ const COMMUNITY_CATEGORIES = [
 ] as const;
 
 export default function CommunityPage() {
+  const { currentUser, openAuthModal } = useAuth();
   const [activeCategory, setActiveCategory] =
     useState<(typeof COMMUNITY_CATEGORIES)[number]>("Discussions");
   const [filterMode, setFilterMode] = useState<"Latest" | "Trending" | "Following">(
@@ -39,13 +41,26 @@ export default function CommunityPage() {
     e.preventDefault();
     if (!newPostContent.trim()) return;
 
+    if (!currentUser) {
+      openAuthModal({
+        title: "Join Community Discussions",
+        description: "Sign in or create an account to share reflections, ask questions, and encourage other believers.",
+        pendingAction: {
+          type: "post_comment",
+          content: newPostContent.trim(),
+          category: activeCategory,
+        },
+      });
+      return;
+    }
+
     const newPost: CommunityPost = {
       id: `post-${Date.now()}`,
       author: {
-        id: CURRENT_USER.id,
-        name: CURRENT_USER.displayName,
-        username: CURRENT_USER.username,
-        avatarUrl: CURRENT_USER.avatarUrl,
+        id: currentUser.id,
+        name: currentUser.displayName,
+        username: currentUser.username,
+        avatarUrl: currentUser.avatarUrl,
       },
       category: activeCategory,
       content: newPostContent.trim(),
@@ -60,6 +75,18 @@ export default function CommunityPage() {
   };
 
   const handleToggleLike = (postId: string) => {
+    if (!currentUser) {
+      openAuthModal({
+        title: "React to Discussion",
+        description: "Create an account or sign in to support testimonies and stand in prayer with fellow believers.",
+        pendingAction: {
+          type: "like_post",
+          postId,
+        },
+      });
+      return;
+    }
+
     setPosts(
       posts.map((p) => {
         if (p.id === postId) {
@@ -115,8 +142,8 @@ export default function CommunityPage() {
         <div className="flex items-start gap-3">
           <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[#2a2929]">
             <Image
-              src={CURRENT_USER.avatarUrl}
-              alt={CURRENT_USER.displayName}
+              src={currentUser?.avatarUrl || "/images/gospel-forge-emblem.jpg"}
+              alt={currentUser?.displayName || "Guest"}
               fill
               className="object-cover"
             />

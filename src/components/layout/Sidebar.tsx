@@ -19,6 +19,7 @@ import {
   Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 interface NavItem {
   name: string;
@@ -45,6 +46,7 @@ const LIBRARY_NAV: NavItem[] = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { currentUser, canAccessStudio, isArtistPending } = useAuth();
 
   return (
     <aside className="hidden lg:flex w-[250px] shrink-0 flex-col bg-[#0e0d0e] border-r border-[#222123] h-[calc(100vh-88px)] select-none">
@@ -146,6 +148,36 @@ export function Sidebar() {
             })}
           </nav>
         </div>
+
+        {/* Section 6: Studio Visibility — Authorized Staff & Approved Artists ONLY */}
+        {canAccessStudio && (
+          <div>
+            <p className="px-3 text-xs font-semibold uppercase tracking-wider text-[#ffb13b] mb-2 font-mono flex items-center gap-1.5">
+              <Flame className="w-3.5 h-3.5 text-[#ff4500]" />
+              <span>Studio Portal</span>
+            </p>
+            <Link
+              href="/studio"
+              className="flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-sm font-bold bg-[#ff4500]/10 hover:bg-[#ff4500]/20 text-[#ffb13b] border border-[#ff4500]/30 transition-all shadow-[0_0_12px_rgba(255,69,0,0.2)]"
+            >
+              <Flame className="w-4 h-4 text-[#ff4500] animate-pulse" />
+              <span>Gospel Forge Studio</span>
+            </Link>
+          </div>
+        )}
+
+        {/* Pending Artist Status Link */}
+        {isArtistPending && (
+          <div>
+            <Link
+              href="/profile"
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-mono text-blue-300 bg-blue-950/40 border border-blue-500/30 hover:bg-blue-950/70 transition-all"
+            >
+              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+              <span>Artist Application Pending</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       {/* Forged Frequency Brand Banner footer in sidebar */}

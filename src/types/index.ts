@@ -1,6 +1,21 @@
 export type UserRole = "listener" | "editor" | "admin" | "super_admin";
 export type AccountStatus = "active" | "suspended" | "pending_verification";
 export type PublicationStatus = "draft" | "scheduled" | "published" | "archived";
+export type ArtistStatus = "none" | "pending" | "approved" | "rejected";
+
+export interface ArtistApplication {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  ministryOrBandName: string;
+  bio: string;
+  sampleAudioLink?: string;
+  status: ArtistStatus;
+  submittedAt: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
+}
 
 export interface UserAccount {
   id: string;
@@ -10,10 +25,20 @@ export interface UserAccount {
   avatarUrl: string;
   role: UserRole;
   status: AccountStatus;
+  artistStatus?: ArtistStatus;
+  artistApplication?: ArtistApplication;
   bio?: string;
   createdAt: string;
   lastSignInAt?: string;
 }
+
+export type PendingAuthAction =
+  | { type: "save_episode"; episodeId: string; episodeTitle?: string }
+  | { type: "create_playlist" }
+  | { type: "post_comment"; content: string; category?: string }
+  | { type: "like_post"; postId: string }
+  | { type: "follow_series"; seriesId: string }
+  | { type: "view_profile" };
 
 export interface Speaker {
   id: string;
@@ -143,7 +168,7 @@ export interface AuditLog {
   userName: string;
   userRole: UserRole;
   action: string;
-  targetType: "episode" | "user" | "role" | "community" | "settings" | "rss";
+  targetType: "episode" | "user" | "role" | "community" | "settings" | "rss" | "artist";
   targetId: string;
   targetTitle?: string;
   metadata?: Record<string, any>;

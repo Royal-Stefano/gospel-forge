@@ -6,6 +6,7 @@ import { PodcastStoreProvider } from "@/context/PodcastStoreContext";
 import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
 import { PersistentPlayer } from "@/components/player/PersistentPlayer";
 import { AppShell } from "@/components/layout/AppShell";
+import { ContextualAuthModal } from "@/components/auth/ContextualAuthModal";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -64,6 +65,7 @@ export default function RootLayout({
             <AudioPlayerProvider>
               <AppShell>{children}</AppShell>
               <PersistentPlayer />
+              <ContextualAuthModal />
             </AudioPlayerProvider>
           </PodcastStoreProvider>
         </AuthProvider>

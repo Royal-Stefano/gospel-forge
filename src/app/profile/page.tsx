@@ -12,15 +12,60 @@ import {
   Play,
   Heart,
   Calendar,
+  LogOut,
+  User,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  ExternalLink,
 } from "lucide-react";
-import { CURRENT_USER, USER_PLAYLISTS, EPISODES } from "@/data/mockData";
+import { USER_PLAYLISTS, EPISODES } from "@/data/mockData";
 import { EpisodeCard } from "@/components/podcast/EpisodeCard";
+import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 
 export default function ProfilePage() {
+  const { currentUser, logout, openAuthModal, canAccessStudio } = useAuth();
   const [activeTab, setActiveTab] = useState<
     "playlists" | "saved" | "history"
   >("playlists");
+
+  if (!currentUser) {
+    return (
+      <div className="px-4 md:px-8 py-16 max-w-xl mx-auto text-center space-y-6">
+        <div className="w-16 h-16 rounded-full bg-[#ff4500]/15 text-[#ff4500] border border-[#ff4500]/40 flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(255,69,0,0.4)]">
+          <User className="w-8 h-8" />
+        </div>
+        <div>
+          <h1 className="font-heading text-3xl font-extrabold text-white">
+            Guest Listener Profile
+          </h1>
+          <p className="text-xs sm:text-sm text-[#a5a6af] mt-2 font-body leading-relaxed">
+            You are browsing Gospel Forge as a guest. Sign in or create an account to save messages, curate personal faith playlists, and track your listening history.
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+          <button
+            onClick={() =>
+              openAuthModal({
+                title: "Create Account",
+                description: "Join Gospel Forge to save episodes and sync progress.",
+              })
+            }
+            className="px-6 py-3 rounded-full bg-gradient-to-r from-[#ff4500] to-[#ffb13b] text-black font-heading font-bold text-xs uppercase tracking-wider shadow-lg"
+          >
+            Create Free Account
+          </button>
+          <Link
+            href="/login"
+            className="px-6 py-3 rounded-full bg-[#181719] hover:bg-[#201f22] border border-[#262527] text-xs font-semibold text-white"
+          >
+            Sign In
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 md:px-8 py-6 space-y-8 max-w-5xl mx-auto">
@@ -32,8 +77,8 @@ export default function ProfilePage() {
           {/* Avatar */}
           <div className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden border-2 border-[#ff4500] shadow-[0_0_25px_rgba(255,69,0,0.5)] shrink-0">
             <Image
-              src={CURRENT_USER.avatarUrl}
-              alt={CURRENT_USER.displayName}
+              src={currentUser.avatarUrl}
+              alt={currentUser.displayName}
               fill
               className="object-cover"
             />
@@ -43,52 +88,67 @@ export default function ProfilePage() {
           <div className="flex-1 space-y-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white">
-                  {CURRENT_USER.displayName}
-                </h1>
-                <p className="text-xs font-mono text-[#ffb13b]">
-                  @{CURRENT_USER.username}
+                <div className="flex items-center justify-center sm:justify-start gap-2">
+                  <h1 className="font-heading text-2xl sm:text-3xl font-extrabold text-white">
+                    {currentUser.displayName}
+                  </h1>
+                  <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase bg-[#181719] text-[#ffb13b] border border-[#262527]">
+                    {currentUser.role.replace("_", " ")}
+                  </span>
+                </div>
+                <p className="text-xs font-mono text-[#a5a6af] mt-0.5">
+                  @{currentUser.username} • {currentUser.email}
                 </p>
               </div>
 
-              <button className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#1c1b1b] hover:bg-[#252426] border border-[#2e2d2f] text-xs font-semibold text-white transition-all">
-                <Edit3 className="w-3.5 h-3.5 text-[#ff4500]" />
-                <span>Edit Profile</span>
-              </button>
+              <div className="flex items-center gap-2 justify-center sm:justify-end">
+                {canAccessStudio && (
+                  <Link
+                    href="/studio"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#ff4500]/15 hover:bg-[#ff4500]/25 border border-[#ff4500]/40 text-[#ffb13b] text-xs font-mono font-bold uppercase transition-all"
+                  >
+                    <Flame className="w-3.5 h-3.5 text-[#ff4500]" />
+                    <span>Studio</span>
+                  </Link>
+                )}
+                <button
+                  onClick={logout}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1c1b1b] hover:bg-red-950/60 border border-[#2e2d2f] text-xs font-semibold text-[#a5a6af] hover:text-red-400 transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Log Out</span>
+                </button>
+              </div>
             </div>
 
             <p className="text-xs sm:text-sm text-[#a5a6af] font-body max-w-xl">
-              {CURRENT_USER.bio}
+              {currentUser.bio || "Gospel Forge audio streaming listener."}
             </p>
 
-            {/* Stats row */}
-            <div className="flex items-center justify-center sm:justify-start gap-6 pt-3 text-xs font-mono">
-              <div>
-                <span className="font-bold text-white text-sm">
-                  {CURRENT_USER.playlistsCount}
-                </span>{" "}
-                <span className="text-[#6e6f77]">Playlists</span>
+            {/* Artist Application Status Banner if applicable */}
+            {currentUser.artistStatus === "pending" && (
+              <div className="p-3 rounded-xl bg-blue-950/60 border border-blue-500/40 text-blue-200 text-xs font-mono flex items-center gap-2 mt-3">
+                <Clock className="w-4 h-4 text-blue-400 shrink-0" />
+                <span>
+                  Artist application submitted (Stone Altar Ministries). Status:{" "}
+                  <strong>Under Review by Admin</strong>.
+                </span>
               </div>
-              <span>•</span>
-              <div>
-                <span className="font-bold text-white text-sm">
-                  {CURRENT_USER.followingCount}
-                </span>{" "}
-                <span className="text-[#6e6f77]">Following</span>
+            )}
+
+            {currentUser.artistStatus === "approved" && (
+              <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-xs font-mono flex items-center gap-2 mt-3">
+                <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>
+                  Artist account approved! You have authorized access to Gospel Forge Studio.
+                </span>
               </div>
-              <span>•</span>
-              <div>
-                <span className="font-bold text-white text-sm">
-                  {CURRENT_USER.followersCount}
-                </span>{" "}
-                <span className="text-[#6e6f77]">Followers</span>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Tabs: Playlists | Saved Episodes | Listening History */}
+      {/* Tabs */}
       <div className="flex items-center gap-6 border-b border-[#222123] pb-3 text-sm font-semibold">
         {[
           { id: "playlists", label: "Playlists", icon: ListMusic },

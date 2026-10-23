@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Play, Pause, Heart, Clock } from "lucide-react";
 import { Episode } from "@/types";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
+import { useAuth } from "@/context/AuthContext";
 import { formatTime, formatDate, cn } from "@/lib/utils";
 
 interface EpisodeCardProps {
@@ -23,6 +24,8 @@ export function EpisodeCard({ episode, variant = "vertical" }: EpisodeCardProps)
     isEpisodeSaved,
   } = useAudioPlayer();
 
+  const { currentUser, openAuthModal } = useAuth();
+
   const isCurrent = currentEpisode?.id === episode.id;
   const isPlayingCurrent = isCurrent && isPlaying;
   const isSaved = isEpisodeSaved(episode.id);
@@ -30,6 +33,7 @@ export function EpisodeCard({ episode, variant = "vertical" }: EpisodeCardProps)
   const handlePlayClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    // Public playback works unconditionally for guests and logged-in users alike
     if (isCurrent) {
       togglePlay();
     } else {
@@ -40,6 +44,18 @@ export function EpisodeCard({ episode, variant = "vertical" }: EpisodeCardProps)
   const handleSaveClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!currentUser) {
+      openAuthModal({
+        title: "Save to Your Library",
+        description: `Create a free listener account or sign in to save "${episode.title}" and access it anytime across devices.`,
+        pendingAction: {
+          type: "save_episode",
+          episodeId: episode.id,
+          episodeTitle: episode.title,
+        },
+      });
+      return;
+    }
     toggleSaveEpisode(episode.id);
   };
 

@@ -22,9 +22,11 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
+import { useAuth } from "@/context/AuthContext";
 import { formatTime, cn } from "@/lib/utils";
 
 export function PersistentPlayer() {
+  const { currentUser, openAuthModal } = useAuth();
   const {
     currentEpisode,
     isPlaying,
@@ -102,7 +104,21 @@ export function PersistentPlayer() {
             </Link>
           </div>
           <button
-            onClick={() => toggleSaveEpisode(currentEpisode.id)}
+            onClick={() => {
+              if (!currentUser) {
+                openAuthModal({
+                  title: "Save to Your Library",
+                  description: `Sign in or create a free account to bookmark "${currentEpisode.title}" and sync it across devices.`,
+                  pendingAction: {
+                    type: "save_episode",
+                    episodeId: currentEpisode.id,
+                    episodeTitle: currentEpisode.title,
+                  },
+                });
+                return;
+              }
+              toggleSaveEpisode(currentEpisode.id);
+            }}
             className={cn(
               "p-1.5 rounded-full hover:bg-[#1c1b1b] transition-colors ml-1",
               isSaved ? "text-[#ff4500]" : "text-[#6e6f77] hover:text-white"
@@ -350,7 +366,21 @@ export function PersistentPlayer() {
               </p>
             </div>
             <button
-              onClick={() => toggleSaveEpisode(currentEpisode.id)}
+              onClick={() => {
+                if (!currentUser) {
+                  openAuthModal({
+                    title: "Save to Your Library",
+                    description: `Sign in or create an account to bookmark "${currentEpisode.title}".`,
+                    pendingAction: {
+                      type: "save_episode",
+                      episodeId: currentEpisode.id,
+                      episodeTitle: currentEpisode.title,
+                    },
+                  });
+                  return;
+                }
+                toggleSaveEpisode(currentEpisode.id);
+              }}
               className={cn(
                 "p-2 rounded-full bg-[#181719]",
                 isSaved ? "text-[#ff4500]" : "text-[#a5a6af]"

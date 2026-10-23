@@ -21,12 +21,14 @@ import {
 } from "lucide-react";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
 import { usePodcastStore } from "@/context/PodcastStoreContext";
+import { useAuth } from "@/context/AuthContext";
 import { formatTime, formatDate, cn } from "@/lib/utils";
 
 export default function EpisodeDetailPage() {
   const params = useParams();
   const slug = params?.slug as string;
 
+  const { currentUser, openAuthModal } = useAuth();
   const { getEpisodeBySlug, getPublishedEpisodes } = usePodcastStore();
   const publishedEpisodes = getPublishedEpisodes();
   const episode = getEpisodeBySlug(slug) || publishedEpisodes[0];
@@ -142,7 +144,21 @@ export default function EpisodeDetailPage() {
             </button>
 
             <button
-              onClick={() => toggleSaveEpisode(episode.id)}
+              onClick={() => {
+                if (!currentUser) {
+                  openAuthModal({
+                    title: "Save to Your Library",
+                    description: `Sign in or register to bookmark "${episode.title}" and access it across all devices.`,
+                    pendingAction: {
+                      type: "save_episode",
+                      episodeId: episode.id,
+                      episodeTitle: episode.title,
+                    },
+                  });
+                  return;
+                }
+                toggleSaveEpisode(episode.id);
+              }}
               className={cn(
                 "inline-flex items-center gap-2 px-5 py-3 rounded-full border transition-all text-sm font-semibold",
                 isSaved
