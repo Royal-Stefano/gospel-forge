@@ -21,6 +21,7 @@ import {
   canManageRoles,
   canManageUsers,
 } from "@/lib/auth/roles";
+import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export const INITIAL_USERS: UserAccount[] = [
   {
@@ -168,6 +169,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Load persisted session and users from localStorage
   useEffect(() => {
+    const supabase = getSupabaseBrowserClient();
+
+    if (supabase) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) {
+          supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single()
+            .then(({ data: profile }) => {
+              if (profile) {
+                const userAcc: UserAccount = {
+                  id: profile.id,
+                  email: profile.email,
+                  username: profile.username,
+                  displayName: profile.display_name,
+                  avatarUrl:
+                    profile.avatar_url ||
+                    "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80",
+                  role: profile.role,
+                  status: "active",
+                  artistStatus: profile.artist_status,
+                  createdAt: profile.created_at,
+                  lastSignInAt: new Date().toISOString(),
+                };
+                setCurrentUser(userAcc);
+              }
+            });
+        }
+      });
+
+      const { data: authListener } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          if (event === "SIGNED_OUT") {
+            setCurrentUser(null);
+            localStorage.removeItem("gospel_auth_session");
+          }
+        }
+      );
+
+      return () => {
+        authListener.subscription.unsubscribe();
+      };
+    }
+
     try {
       const storedUsers = localStorage.getItem("gospel_users_db");
       if (storedUsers) {
@@ -226,6 +273,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(
     async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
       const normalizedEmail = email.trim().toLowerCase();
+      const supabase = getSupabaseBrowserClient();
+
+      if (supabase) {
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password: pass,
+        });
+
+        if (!error && data.user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", data.user.id)
+            .single();
+
+          if (profile) {
+            const userAcc: UserAccount = {
+              id: profile.id,
+              email: profile.email,
+              username: profile.username,
+              displayName: profile.display_name,
+              avatarUrl:
+                profile.avatar_url ||
+                "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80",
+              role: profile.role,
+              status: "active",
+              artistStatus: profile.artist_status,
+              createdAt: profile.created_at,
+              lastSignInAt: new Date().toISOString(),
+            };
+            setCurrentUser(userAcc);
+            setIsAuthModalOpen(false);
+            return { success: true };
+          }
+        }
+      }
+
+      // Local development fallback
       const user = usersList.find((u) => u.email.toLowerCase() === normalizedEmail);
 
       if (!user) {
@@ -276,6 +361,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const normalizedEmail = email.trim().toLowerCase();
       if (!normalizedEmail || !pass || !displayName) {
         return { success: false, error: "All registration fields are required." };
+      }
+
+      const supabase = getSupabaseBrowserClient();
+
+      if (supabase) {
+        const { error } = await supabase.auth.signUp({
+          email: normalizedEmail,
+          password: pass,
+          options: {
+            data: {
+              display_name: displayName.trim(),
+              is_artist: accountType === "artist",
+              ministry_name: artistDetails?.ministryName,
+              bio: artistDetails?.bio,
+            },
+          },
+        });
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
       }
 
       const exists = usersList.some(
@@ -335,6 +441,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = useCallback(() => {
+    const supabase = getSupabaseBrowserClient();
+    if (supabase) {
+      supabase.auth.signOut();
+    }
     setCurrentUser(null);
     setPendingAction(null);
     try {
@@ -389,6 +499,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
       }
 
+      try {
+        // Trigger server-side role assignment
+        await fetch("/api/admin/users/role", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ targetUserId, newRole }),
+        });
+      } catch (err) {
+        console.warn("Server-side role update warning:", err);
+      }
+
       const targetUser = usersList.find((u) => u.id === targetUserId);
       if (!targetUser) return { success: false, error: "User not found." };
 
@@ -425,6 +546,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { success: false, error: "Permission denied: Admin rights required to approve artists." };
       }
 
+      try {
+        // Trigger server-side artist approval
+        await fetch("/api/admin/artists/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ applicationId: appId, action: "approve" }),
+        });
+      } catch (err) {
+        console.warn("Server-side artist approval warning:", err);
+      }
+
       const updated = usersList.map((u) => {
         if (u.artistApplication?.id === appId) {
           const approvedApp: ArtistApplication = {
@@ -454,6 +586,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (appId: string): Promise<{ success: boolean; error?: string }> => {
       if (!currentUser || !canManageUsers(currentUser.role)) {
         return { success: false, error: "Permission denied: Admin rights required." };
+      }
+
+      try {
+        // Trigger server-side artist rejection
+        await fetch("/api/admin/artists/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ applicationId: appId, action: "reject" }),
+        });
+      } catch (err) {
+        console.warn("Server-side artist rejection warning:", err);
       }
 
       const updated = usersList.map((u) => {

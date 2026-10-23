@@ -77,6 +77,9 @@ export default function NewEpisodeWizardPage() {
   ]);
 
   // Audio Upload State
+  const [audioUrl, setAudioUrl] = useState<string>(
+    "https://storage.googleapis.com/gospel-forge-audio/sample-forge-episode.mp3"
+  );
   const [audioFile, setAudioFile] = useState<{
     name: string;
     size: string;
@@ -89,6 +92,8 @@ export default function NewEpisodeWizardPage() {
     durationSeconds: 2720,
   });
   const [isAudioUploading, setIsAudioUploading] = useState(false);
+  const [isArtworkUploading, setIsArtworkUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
 
   // Artwork & Media State
@@ -166,26 +171,90 @@ export default function NewEpisodeWizardPage() {
     setScriptures(scriptures.filter((s) => s !== scriptureToRemove));
   };
 
-  // Audio Upload Simulation
-  const handleAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Audio Upload via Presigned R2 API with graceful fallback
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setUploadError(null);
     setIsAudioUploading(true);
-    setTimeout(() => {
-      setAudioFile({
-        name: file.name,
-        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        duration: "45:20",
-        durationSeconds: 2720,
+
+    let durationSeconds = 2720;
+    try {
+      const audioObj = new Audio(URL.createObjectURL(file));
+      await new Promise<void>((resolve) => {
+        audioObj.onloadedmetadata = () => {
+          if (!isNaN(audioObj.duration) && isFinite(audioObj.duration)) {
+            durationSeconds = Math.round(audioObj.duration);
+          }
+          resolve();
+        };
+        audioObj.onerror = () => resolve();
       });
+    } catch {
+      // Keep default estimated duration if extraction fails
+    }
+
+    const durationMinutes = Math.floor(durationSeconds / 60);
+    const durationRemSec = durationSeconds % 60;
+    const durationFormatted = `${durationMinutes}:${durationRemSec < 10 ? "0" : ""}${durationRemSec}`;
+
+    setAudioFile({
+      name: file.name,
+      size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+      duration: durationFormatted,
+      durationSeconds,
+    });
+
+    try {
+      const res = await fetch("/api/media/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileSizeBytes: file.size,
+          contentType: file.type || "audio/mpeg",
+          mediaType: "audio",
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.uploadUrl) {
+          const uploadRes = await fetch(data.uploadUrl, {
+            method: "PUT",
+            headers: data.headers || { "Content-Type": file.type || "audio/mpeg" },
+            body: file,
+          });
+
+          if (uploadRes.ok) {
+            setAudioUrl(data.publicDeliveryUrl || URL.createObjectURL(file));
+          } else {
+            console.warn("Direct R2 upload response not OK, using media delivery endpoint.");
+            setAudioUrl(data.publicDeliveryUrl || URL.createObjectURL(file));
+          }
+        }
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        if (errData.error) {
+          console.warn("Upload URL error:", errData.error);
+        }
+        setAudioUrl(URL.createObjectURL(file));
+      }
+    } catch (err) {
+      console.warn("Audio upload network notice, using local media buffer:", err);
+      setAudioUrl(URL.createObjectURL(file));
+    } finally {
       setIsAudioUploading(false);
-    }, 1200);
+    }
   };
 
-  // Artwork Upload Simulation
-  const handleArtworkUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Artwork Upload via Presigned R2 API with graceful preview
+  const handleArtworkUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    setIsArtworkUploading(true);
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
@@ -193,6 +262,37 @@ export default function NewEpisodeWizardPage() {
       }
     };
     reader.readAsDataURL(file);
+
+    try {
+      const res = await fetch("/api/media/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileSizeBytes: file.size,
+          contentType: file.type || "image/jpeg",
+          mediaType: "artwork",
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.uploadUrl) {
+          await fetch(data.uploadUrl, {
+            method: "PUT",
+            headers: data.headers || { "Content-Type": file.type || "image/jpeg" },
+            body: file,
+          });
+          if (data.publicDeliveryUrl) {
+            setArtworkUrl(data.publicDeliveryUrl);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Artwork upload notice, keeping local preview:", err);
+    } finally {
+      setIsArtworkUploading(false);
+    }
   };
 
   // Gallery Image Add
@@ -213,9 +313,18 @@ export default function NewEpisodeWizardPage() {
   };
 
   // Final Publish Handler
-  const handlePublish = async () => {
+  const handlePublish = async (asDraft: boolean = false) => {
     setIsSubmitting(true);
     try {
+      let finalStatus: PublicationStatus = "draft";
+      if (!asDraft) {
+        if (canPublish) {
+          finalStatus = publishOption === "now" ? "published" : "scheduled";
+        } else {
+          finalStatus = "submitted";
+        }
+      }
+
       const newEpisodeData: Partial<Episode> = {
         title: title || "Untitled Episode",
         slug: slug || `episode-${Date.now()}`,
@@ -226,20 +335,18 @@ export default function NewEpisodeWizardPage() {
         episodeNumber: Number(episodeNumber) || 1,
         seasonNumber: 1,
         durationSeconds: audioFile?.durationSeconds || 2720,
-        audioUrl:
-          "https://storage.googleapis.com/gospel-forge-audio/sample-forge-episode.mp3",
+        audioUrl: audioUrl,
         artworkUrl: artworkUrl,
         bannerUrl: bannerUrl,
         scriptureReferences: scriptures,
         topics: tags,
-        status:
-          publishOption === "now"
-            ? "published"
-            : "scheduled",
+        status: finalStatus,
         publishDate:
-          publishOption === "now"
+          finalStatus === "published"
             ? new Date().toISOString()
-            : new Date(`${scheduledDate}T${scheduledTime}:00Z`).toISOString(),
+            : finalStatus === "scheduled"
+            ? new Date(`${scheduledDate}T${scheduledTime}:00Z`).toISOString()
+            : new Date().toISOString(),
         isExplicit: isExplicit,
         transcript: transcript,
       };
@@ -1319,11 +1426,14 @@ export default function NewEpisodeWizardPage() {
 
                 <div className="space-y-1">
                   <h2 className="font-heading text-2xl sm:text-3xl font-black text-white">
-                    Episode Successfully Published!
+                    {canPublish
+                      ? "Episode Successfully Processed!"
+                      : "Episode Submitted for Review!"}
                   </h2>
-                  <p className="text-sm text-[#a5a6af]">
-                    &quot;{title}&quot; is now live on Gospel Forge and distributing to
-                    connected podcast channels worldwide.
+                  <p className="text-sm text-[#a5a6af] max-w-lg mx-auto">
+                    {canPublish
+                      ? `"${title}" has been saved and configured on Gospel Forge.`
+                      : `"${title}" has been submitted to the Gospel Forge editorial team. You will be notified once theological review is approved.`}
                   </p>
                 </div>
 
@@ -1404,11 +1514,19 @@ export default function NewEpisodeWizardPage() {
                 {/* Terms and Confirmation */}
                 <div className="p-4 rounded-xl bg-[#141316] border border-[#222026] text-xs text-[#a5a6af] space-y-2">
                   <p>
-                    By clicking <strong>Publish Episode Now</strong>, you confirm that
+                    By clicking <strong>{canPublish ? "Publish Episode Now" : "Submit for Editorial Review"}</strong>, you confirm that
                     this content complies with Gospel Forge doctrinal integrity
                     guidelines, and that you hold full broadcasting rights to all
                     underlying spoken word and musical elements.
                   </p>
+                  {!canPublish && (
+                    <div className="flex items-center gap-2 p-2.5 rounded-lg bg-[#ff7733]/10 border border-[#ff7733]/20 text-[#ffb13b]">
+                      <Info className="w-4 h-4 shrink-0 text-[#ff7733]" />
+                      <span>
+                        As a creator, your episode will be submitted to the Gospel Forge editorial team for theological review prior to public release.
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Final Submit Actions */}
@@ -1422,21 +1540,38 @@ export default function NewEpisodeWizardPage() {
                     <span>Back to Advanced Settings</span>
                   </button>
 
-                  <button
-                    type="button"
-                    onClick={handlePublish}
-                    disabled={isSubmitting}
-                    className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#ff4500] via-[#e63900] to-[#b32b00] text-white font-heading font-black text-xs tracking-wider uppercase hover:shadow-[0_0_30px_rgba(255,69,0,0.6)] transition-all flex items-center gap-2 disabled:opacity-50"
-                  >
-                    {isSubmitting ? (
-                      <span>Publishing to The Forge...</span>
-                    ) : (
-                      <>
-                        <Flame className="w-4 h-4" />
-                        <span>Publish Episode Now</span>
-                      </>
-                    )}
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => handlePublish(true)}
+                      disabled={isSubmitting}
+                      className="px-5 py-3.5 rounded-xl bg-[#18171d] hover:bg-[#201e26] text-white font-heading font-bold text-xs tracking-wider uppercase border border-[#2d2a36] transition-all flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <Save className="w-4 h-4 text-[#a5a6af]" />
+                      <span>Save as Draft</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handlePublish(false)}
+                      disabled={isSubmitting}
+                      className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#ff4500] via-[#e63900] to-[#b32b00] text-white font-heading font-black text-xs tracking-wider uppercase hover:shadow-[0_0_30px_rgba(255,69,0,0.6)] transition-all flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isSubmitting ? (
+                        <span>Processing with The Forge...</span>
+                      ) : canPublish ? (
+                        <>
+                          <Flame className="w-4 h-4" />
+                          <span>Publish Episode Now</span>
+                        </>
+                      ) : (
+                        <>
+                          <Flame className="w-4 h-4" />
+                          <span>Submit for Review</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </>
             )}

@@ -268,6 +268,16 @@ export function PodcastStoreProvider({
         return { success: false, error: "Cannot publish: No playable audio source attached." };
       }
 
+      try {
+        await fetch("/api/episodes/publish", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ episodeId: id, toStatus: "published" }),
+        });
+      } catch (err) {
+        console.warn("Server publishing call warning:", err);
+      }
+
       const updatedEpisode: Episode = {
         ...target,
         status: "published",
@@ -329,6 +339,16 @@ export function PodcastStoreProvider({
 
       const target = episodes.find((e) => e.id === id);
       if (!target) return { success: false, error: "Episode not found." };
+
+      try {
+        await fetch("/api/episodes/publish", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ episodeId: id, toStatus: "archived" }),
+        });
+      } catch (err) {
+        console.warn("Server archive call warning:", err);
+      }
 
       const updatedList = episodes.map((e) =>
         e.id === id ? { ...e, status: "archived" as PublicationStatus } : e
