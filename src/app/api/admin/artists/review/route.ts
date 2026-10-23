@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyServerAuth } from "@/lib/auth/serverAuth";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { checkRateLimit, getClientIp } from "@/lib/security/rateLimiter";
+import { checkSharedRateLimit, getClientIp } from "@/lib/security/rateLimiter";
 import { z } from "zod";
 
 const ReviewSchema = z.object({
@@ -13,7 +13,7 @@ const ReviewSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const clientIp = getClientIp(request);
-    const rateLimit = checkRateLimit(`artist_review:${clientIp}`, 60, 600);
+    const rateLimit = await checkSharedRateLimit(`artist_review:${clientIp}`, 60, 600);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many review requests. Please try again later." },

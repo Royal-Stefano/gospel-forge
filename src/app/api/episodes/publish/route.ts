@@ -4,7 +4,7 @@ import { getSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { validateStatusTransition } from "@/lib/publishing/workflow";
 import { PublicationStatus, UserRole } from "@/types";
-import { checkRateLimit, getClientIp } from "@/lib/security/rateLimiter";
+import { checkSharedRateLimit, getClientIp } from "@/lib/security/rateLimiter";
 import { z } from "zod";
 
 const TransitionSchema = z.object({
@@ -26,7 +26,7 @@ const TransitionSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const clientIp = getClientIp(request);
-    const rateLimit = checkRateLimit(`publish_action:${clientIp}`, 30, 60);
+    const rateLimit = await checkSharedRateLimit(`publish_action:${clientIp}`, 30, 60);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many publishing status requests. Please slow down." },

@@ -1,6 +1,6 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkRateLimit } from '../src/lib/security/rateLimiter.ts';
+import { checkRateLimit, checkSharedRateLimit } from '../src/lib/security/rateLimiter.ts';
 
 // Logic matching src/app/auth/callback/route.ts
 function sanitizeRedirectUrl(next) {
@@ -100,6 +100,13 @@ describe('Security Hardening & Vulnerability Audit', () => {
       assert.equal(blocked.allowed, false);
       assert.equal(blocked.remaining, 0);
       assert.ok(blocked.resetSeconds > 0);
+    });
+
+    test('Shared rate limiter operates asynchronously across processes', async () => {
+      const id = 'test-shared-client-' + Date.now();
+      const res = await checkSharedRateLimit(id, 5, 60);
+      assert.equal(res.allowed, true);
+      assert.equal(res.remaining, 4);
     });
   });
 

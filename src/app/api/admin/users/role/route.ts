@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyServerAuth } from "@/lib/auth/serverAuth";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { checkRateLimit, getClientIp } from "@/lib/security/rateLimiter";
+import { checkSharedRateLimit, getClientIp } from "@/lib/security/rateLimiter";
 import { z } from "zod";
 
 const RoleUpdateSchema = z.object({
@@ -12,7 +12,7 @@ const RoleUpdateSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const clientIp = getClientIp(request);
-    const rateLimit = checkRateLimit(`role_update:${clientIp}`, 30, 600);
+    const rateLimit = await checkSharedRateLimit(`role_update:${clientIp}`, 30, 600);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many role update requests. Please try again later." },

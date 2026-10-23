@@ -3,7 +3,7 @@ import { verifyServerAuth } from "@/lib/auth/serverAuth";
 import { r2Storage } from "@/lib/storage/r2Adapter";
 import { STORAGE_LIMITS } from "@/lib/storage/types";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { checkRateLimit, getClientIp } from "@/lib/security/rateLimiter";
+import { checkSharedRateLimit, getClientIp } from "@/lib/security/rateLimiter";
 import { z } from "zod";
 
 const UploadUrlSchema = z.object({
@@ -16,7 +16,7 @@ const UploadUrlSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const clientIp = getClientIp(request);
-    const rateLimit = checkRateLimit(`upload_url:${clientIp}`, 20, 600);
+    const rateLimit = await checkSharedRateLimit(`upload_url:${clientIp}`, 20, 600);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Upload rate limit exceeded. Please wait a few minutes." },

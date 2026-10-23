@@ -54,16 +54,33 @@ export async function GET(request: NextRequest) {
 
       const { data, error } = await dbQuery;
 
-      if (!error && data && data.length > 0) {
-        return NextResponse.json({
-          episodes: data,
-          total: data.length,
-          source: "database",
-        });
+      if (error && process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          { error: "Database error querying published episodes.", details: error.message },
+          { status: 500 }
+        );
+      }
+
+      if (!error && data) {
+        // In production, database is source of truth; if empty, return empty list
+        if (data.length > 0 || process.env.NODE_ENV === "production") {
+          return NextResponse.json({
+            episodes: data,
+            total: data.length,
+            source: "database",
+          });
+        }
       }
     }
 
-    // Graceful fallback to verified published mock fixtures in local development
+    if (process.env.NODE_ENV === "production") {
+      return NextResponse.json(
+        { error: "Database service unavailable in production." },
+        { status: 503 }
+      );
+    }
+
+    // Graceful fallback to verified published mock fixtures strictly in local development
     let filtered = MOCK_EPISODES.filter((ep) => ep.status === "published");
 
     if (seriesId) {

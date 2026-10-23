@@ -44,7 +44,13 @@ export async function GET(
         }
       }
     } else {
-      // In local development mock mode without database
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          { error: "Database service required for media authorization in production." },
+          { status: 503 }
+        );
+      }
+      // Strictly in local development mock mode without database
       isPubliclyAvailable = true;
     }
 

@@ -15,7 +15,13 @@ export async function GET(request: NextRequest) {
     const adminSupabase: any = getSupabaseAdminClient();
 
     if (!adminSupabase) {
-      // In local development mock mode without database
+      if (process.env.NODE_ENV === "production") {
+        return NextResponse.json(
+          { error: "Database service unavailable in production." },
+          { status: 503 }
+        );
+      }
+      // Strictly in local development mock mode without database
       return NextResponse.json({
         totalPlays: 12580,
         uniqueListeners: 8420,

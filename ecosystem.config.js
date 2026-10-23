@@ -2,7 +2,8 @@ module.exports = {
   apps: [
     {
       name: "gospel-forge",
-      script: ".next/standalone/server.js",
+      script: "server.js",
+      cwd: "./.next/standalone",
       instances: "max",
       exec_mode: "cluster",
       autorestart: true,

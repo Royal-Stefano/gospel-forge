@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
-import { checkRateLimit, getClientIp } from "@/lib/security/rateLimiter";
+import { checkSharedRateLimit, getClientIp } from "@/lib/security/rateLimiter";
 import crypto from "crypto";
 import { z } from "zod";
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
   try {
     const clientIp = getClientIp(request);
     // Rate limit play tracking to max 60 events per minute per IP
-    const rateLimit = checkRateLimit(`track_play:${clientIp}`, 60, 60);
+    const rateLimit = await checkSharedRateLimit(`track_play:${clientIp}`, 60, 60);
     if (!rateLimit.allowed) {
       return NextResponse.json(
         { error: "Too many play tracking requests." },
