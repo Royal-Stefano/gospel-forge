@@ -131,7 +131,7 @@ export function Header({ onToggleMobileNav }: HeaderProps) {
                 />
               </div>
               <span className="hidden md:inline text-xs font-semibold text-white">
-                {currentUser.name.split(" ")[0]}
+                {currentUser.name ? currentUser.name.split(" ")[0] : "Account"}
               </span>
             </Link>
           ) : (
