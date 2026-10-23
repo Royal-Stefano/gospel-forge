@@ -3,11 +3,12 @@
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Pause, Heart, Clock } from "lucide-react";
+import { Play, Pause, Heart, Clock, Radio, Sparkles, BookOpen } from "lucide-react";
 import { Episode } from "@/types";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
 import { useAuth } from "@/context/AuthContext";
 import { formatTime, formatDate, cn } from "@/lib/utils";
+import { AudioVisualizer } from "@/components/audio/AudioVisualizer";
 
 interface EpisodeCardProps {
   episode: Episode;
@@ -33,7 +34,6 @@ export function EpisodeCard({ episode, variant = "vertical" }: EpisodeCardProps)
   const handlePlayClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    // Public playback works unconditionally for guests and logged-in users alike
     if (isCurrent) {
       togglePlay();
     } else {
@@ -61,21 +61,29 @@ export function EpisodeCard({ episode, variant = "vertical" }: EpisodeCardProps)
 
   if (variant === "horizontal") {
     return (
-      <div className="group relative flex items-center gap-4 p-3 rounded-xl bg-[#141314]/80 hover:bg-[#1c1b1b] border border-[#222123] hover:border-[#ff4500]/40 transition-all duration-300 shadow-lg">
+      <div className="group relative flex items-center gap-4 p-3.5 rounded-2xl bg-[#121113]/90 hover:bg-[#1a191c] border border-[#222125] hover:border-[#ff4500]/40 transition-all duration-300 shadow-lg">
         {/* Artwork */}
-        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden shrink-0 border border-[#2a2929]">
+        <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-xl overflow-hidden shrink-0 border border-[#2a2929] bg-[#161517]">
           <Image
             src={episode.artworkUrl}
             alt={episode.title}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
           />
+          {/* Active Audio Visualizer overlay when currently playing */}
+          {isPlayingCurrent && (
+            <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
+              <AudioVisualizer variant="mini" />
+            </div>
+          )}
+
           {/* Overlay Play Button */}
           <button
             onClick={handlePlayClick}
             className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+            aria-label={isPlayingCurrent ? "Pause" : "Play"}
           >
-            <div className="p-2 rounded-full bg-[#ff4500] text-black shadow-[0_0_12px_rgba(255,69,0,0.8)]">
+            <div className="p-2.5 rounded-full bg-[#ff4500] text-black shadow-[0_0_15px_rgba(255,69,0,0.8)]">
               {isPlayingCurrent ? (
                 <Pause className="w-4 h-4 fill-current" />
               ) : (
@@ -87,12 +95,19 @@ export function EpisodeCard({ episode, variant = "vertical" }: EpisodeCardProps)
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[#ffb13b]">
-            {episode.seriesTitle}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#ffb13b]">
+              {episode.seriesTitle}
+            </span>
+            {episode.scriptureReferences?.[0] && (
+              <span className="font-cinzel text-[10px] text-[#a5a6af] font-semibold truncate hidden sm:inline">
+                • {episode.scriptureReferences[0]}
+              </span>
+            )}
+          </div>
           <Link
             href={`/episodes/${episode.slug}`}
-            className="block text-sm font-semibold text-white group-hover:text-[#ff4500] transition-colors truncate"
+            className="block font-heading text-sm font-semibold text-white group-hover:text-[#ff4500] transition-colors truncate mt-0.5"
           >
             {episode.title}
           </Link>
@@ -106,6 +121,7 @@ export function EpisodeCard({ episode, variant = "vertical" }: EpisodeCardProps)
               <Clock className="w-3 h-3" />
               {formatTime(episode.durationSeconds)}
             </span>
+            <span className="hidden md:inline">• 48kHz FLAC</span>
           </div>
         </div>
 
@@ -127,15 +143,28 @@ export function EpisodeCard({ episode, variant = "vertical" }: EpisodeCardProps)
   }
 
   return (
-    <div className="group relative flex flex-col p-3 rounded-2xl bg-[#111113]/90 hover:bg-[#1a191b] border border-[#222123] hover:border-[#ff4500]/40 transition-all duration-300 hover:-translate-y-1 shadow-xl">
+    <div className="group relative flex flex-col p-3.5 rounded-2xl bg-[#111013]/90 hover:bg-[#1a181c] border border-[#222025] hover:border-[#ff4500]/40 transition-all duration-300 hover:-translate-y-1 shadow-xl">
       {/* Artwork container */}
-      <div className="relative aspect-square w-full rounded-xl overflow-hidden mb-3 border border-[#262527] bg-[#161517]">
+      <div className="relative aspect-square w-full rounded-xl overflow-hidden mb-3 border border-[#26242a] bg-[#161418]">
         <Image
           src={episode.artworkUrl}
           alt={episode.title}
           fill
           className="object-cover group-hover:scale-105 transition-transform duration-500"
         />
+
+        {/* Active Audio Visualizer overlay when currently playing */}
+        {isPlayingCurrent && (
+          <div className="absolute top-2.5 left-2.5 px-2 py-1 rounded-full bg-black/75 backdrop-blur-md border border-[#ff4500]/40 flex items-center gap-1.5 shadow-lg">
+            <AudioVisualizer variant="mini" />
+            <span className="text-[9px] font-mono text-[#ffb13b] uppercase">Live</span>
+          </div>
+        )}
+
+        {/* Technical Audio Bitrate Badge */}
+        <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[9px] font-mono text-[#a5a6af] border border-[#2f2e34]">
+          48kHz
+        </div>
 
         {/* Play button floating badge on hover */}
         <button
@@ -159,22 +188,30 @@ export function EpisodeCard({ episode, variant = "vertical" }: EpisodeCardProps)
       {/* Meta */}
       <div className="flex-1 flex flex-col justify-between">
         <div>
-          <span className="text-[10px] font-mono uppercase tracking-wider text-[#ffb13b]">
-            {episode.seriesTitle}
-          </span>
+          <div className="flex items-center justify-between gap-1 mb-1">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-[#ffb13b] truncate">
+              {episode.seriesTitle}
+            </span>
+            {episode.scriptureReferences?.[0] && (
+              <span className="font-cinzel text-[10px] text-[#a5a6af] font-semibold truncate shrink-0">
+                {episode.scriptureReferences[0]}
+              </span>
+            )}
+          </div>
+
           <Link
             href={`/episodes/${episode.slug}`}
-            className="block text-sm font-semibold text-white group-hover:text-[#ffb13b] transition-colors line-clamp-1 mt-0.5"
+            className="block font-heading text-sm font-semibold text-white group-hover:text-[#ffb13b] transition-colors line-clamp-1"
           >
             {episode.title}
           </Link>
-          <p className="text-xs text-[#a5a6af] line-clamp-2 mt-1 font-body">
+          <p className="text-xs text-[#a5a6af] line-clamp-2 mt-1 font-body leading-relaxed">
             {episode.description}
           </p>
         </div>
 
-        <div className="flex items-center justify-between mt-3 pt-2 border-t border-[#222123]/70 text-[11px] font-mono text-[#6e6f77]">
-          <span>{formatTime(episode.durationSeconds)}</span>
+        <div className="flex items-center justify-between mt-3 pt-2.5 border-t border-[#222025] text-[11px] font-mono text-[#6e6f77]">
+          <span className="tabular-nums">{formatTime(episode.durationSeconds)}</span>
           <button
             onClick={handleSaveClick}
             className={cn(

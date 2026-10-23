@@ -7,15 +7,15 @@ import { usePathname } from "next/navigation";
 import {
   Home,
   Compass,
-  Library,
-  Users,
-  BookOpen,
+  Headphones,
   Layers,
+  BookOpen,
+  Users,
   Mic,
   Bookmark,
   ListMusic,
   History,
-  Download,
+  Crown,
   Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -29,11 +29,11 @@ interface NavItem {
 
 const MAIN_NAV: NavItem[] = [
   { name: "Home", href: "/", icon: Home },
-  { name: "Browse", href: "/browse", icon: Compass },
-  { name: "Library", href: "/library", icon: Library },
-  { name: "Community", href: "/community", icon: Users },
-  { name: "Scripture", href: "/scripture", icon: BookOpen },
+  { name: "Discover", href: "/browse", icon: Compass },
+  { name: "Episodes", href: "/episodes/purpose-in-the-process", icon: Headphones },
   { name: "Series", href: "/series", icon: Layers },
+  { name: "Scripture", href: "/scripture", icon: BookOpen },
+  { name: "Community", href: "/community", icon: Users },
   { name: "Speakers", href: "/speakers", icon: Mic },
 ];
 
@@ -41,83 +41,70 @@ const LIBRARY_NAV: NavItem[] = [
   { name: "Saved Episodes", href: "/saved", icon: Bookmark },
   { name: "Playlists", href: "/playlists", icon: ListMusic },
   { name: "Listening History", href: "/history", icon: History },
-  { name: "Downloads", href: "/downloads", icon: Download },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { currentUser, canAccessStudio, isArtistPending } = useAuth();
+  const { currentUser, canAccessStudio, openAuthModal } = useAuth();
 
   return (
-    <aside className="hidden lg:flex w-[250px] shrink-0 flex-col bg-[#0e0d0e] border-r border-[#222123] h-[calc(100vh-88px)] select-none">
+    <aside className="hidden lg:flex w-[220px] xl:w-[240px] shrink-0 flex-col bg-[#0b0a0c] border-r border-[#1f1e21] h-[calc(100vh-88px)] select-none sticky top-0 overflow-y-auto z-20">
       {/* Brand Logo Section */}
-      <div className="p-5 pb-4">
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-11 h-11 rounded-full overflow-hidden border border-[#ff4500]/40 group-hover:border-[#ff4500] transition-all duration-300 shadow-[0_0_15px_rgba(255,69,0,0.3)]">
+      <div className="pt-6 pb-4 px-4 flex justify-center">
+        <Link href="/" className="group flex flex-col items-center">
+          <div className="relative w-24 h-24 rounded-full overflow-hidden border border-[#ff4500]/50 group-hover:border-[#ff4500] transition-all duration-300 shadow-[0_0_25px_rgba(255,69,0,0.4)]">
             <Image
               src="/images/gospel-forge-emblem.jpg"
-              alt="Gospel Forge Logo"
+              alt="Gospel Forge"
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-300"
               priority
             />
           </div>
-          <div className="flex flex-col">
-            <span className="font-heading font-extrabold text-lg tracking-wider text-white flex items-center gap-1.5 leading-none">
-              GOSPEL
-            </span>
-            <span className="font-heading font-bold text-sm tracking-widest text-[#ff4500] flex items-center gap-1 leading-tight">
-              FORGE
-              <Flame className="w-3.5 h-3.5 text-[#ffb13b] animate-pulse" />
-            </span>
-          </div>
         </Link>
       </div>
 
       {/* Navigation Sections */}
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-6">
-        <div>
-          <nav className="space-y-1">
-            {MAIN_NAV.map((item) => {
-              const isActive =
-                item.href === "/"
-                  ? pathname === "/"
-                  : pathname.startsWith(item.href);
-              const Icon = item.icon;
+      <div className="flex-1 px-3 py-2 space-y-6">
+        {/* Main Nav */}
+        <nav className="space-y-1">
+          {MAIN_NAV.map((item) => {
+            const isActive =
+              item.href === "/"
+                ? pathname === "/"
+                : item.href === "/browse"
+                ? pathname === "/browse"
+                : pathname.startsWith(item.href);
+            const Icon = item.icon;
 
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold tracking-wide transition-all duration-200",
+                  isActive
+                    ? "bg-gradient-to-r from-[#e63900] to-[#b32400] text-white shadow-[0_0_20px_rgba(230,57,0,0.5)] border border-[#ff4500]/40"
+                    : "text-[#a5a6af] hover:text-white hover:bg-[#171618]"
+                )}
+              >
+                <Icon
                   className={cn(
-                    "flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
-                    isActive
-                      ? "bg-[#1c1b1b] text-white font-semibold shadow-[inset_3px_0_0_#ff4500]"
-                      : "text-[#a5a6af] hover:text-white hover:bg-[#161516]"
+                    "w-4 h-4 shrink-0",
+                    isActive ? "text-white" : "text-[#a5a6af]"
                   )}
-                >
-                  <Icon
-                    className={cn(
-                      "w-4 h-4 transition-colors",
-                      isActive
-                        ? "text-[#ff4500]"
-                        : "text-[#a5a6af] group-hover:text-white"
-                    )}
-                  />
-                  <span>{item.name}</span>
-                  {isActive && (
-                    <span className="absolute right-3 w-1.5 h-1.5 rounded-full bg-[#ff4500] shadow-[0_0_6px_#ff4500]" />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+                />
+                <span>{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
 
+        {/* Library Section */}
         <div>
-          <p className="px-3 text-xs font-semibold uppercase tracking-wider text-[#6e6f77] mb-2 font-mono">
+          <span className="px-3.5 text-[11px] font-bold text-[#6e6f77] uppercase tracking-wider block mb-2">
             Your Library
-          </p>
+          </span>
           <nav className="space-y-1">
             {LIBRARY_NAV.map((item) => {
               const isActive = pathname.startsWith(item.href);
@@ -128,20 +115,13 @@ export function Sidebar() {
                   key={item.name}
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative",
+                    "flex items-center gap-3 px-3.5 py-2 rounded-xl text-xs font-medium transition-all duration-200",
                     isActive
-                      ? "bg-[#1c1b1b] text-white font-semibold shadow-[inset_3px_0_0_#ff4500]"
-                      : "text-[#a5a6af] hover:text-white hover:bg-[#161516]"
+                      ? "bg-[#1f1e21] text-[#ffb13b] font-semibold"
+                      : "text-[#a5a6af] hover:text-white hover:bg-[#171618]"
                   )}
                 >
-                  <Icon
-                    className={cn(
-                      "w-4 h-4 transition-colors",
-                      isActive
-                        ? "text-[#ff4500]"
-                        : "text-[#a5a6af] group-hover:text-white"
-                    )}
-                  />
+                  <Icon className="w-4 h-4 shrink-0 text-[#6e6f77]" />
                   <span>{item.name}</span>
                 </Link>
               );
@@ -149,49 +129,48 @@ export function Sidebar() {
           </nav>
         </div>
 
-        {/* Section 6: Studio Visibility — Authorized Staff & Approved Artists ONLY */}
+        {/* Studio Admin Shortcut if Staff */}
         {canAccessStudio && (
-          <div>
-            <p className="px-3 text-xs font-semibold uppercase tracking-wider text-[#ffb13b] mb-2 font-mono flex items-center gap-1.5">
-              <Flame className="w-3.5 h-3.5 text-[#ff4500]" />
-              <span>Studio Portal</span>
-            </p>
+          <div className="pt-2">
             <Link
               href="/studio"
-              className="flex items-center gap-3.5 px-3 py-2.5 rounded-lg text-sm font-bold bg-[#ff4500]/10 hover:bg-[#ff4500]/20 text-[#ffb13b] border border-[#ff4500]/30 transition-all shadow-[0_0_12px_rgba(255,69,0,0.2)]"
+              className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-mono font-bold bg-[#ff4500]/15 text-[#ffb13b] border border-[#ff4500]/40 hover:bg-[#ff4500]/25 transition-all shadow-[0_0_12px_rgba(255,69,0,0.25)]"
             >
               <Flame className="w-4 h-4 text-[#ff4500] animate-pulse" />
-              <span>Gospel Forge Studio</span>
-            </Link>
-          </div>
-        )}
-
-        {/* Pending Artist Status Link */}
-        {isArtistPending && (
-          <div>
-            <Link
-              href="/profile"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs font-mono text-blue-300 bg-blue-950/40 border border-blue-500/30 hover:bg-blue-950/70 transition-all"
-            >
-              <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-              <span>Artist Application Pending</span>
+              <span>Gospel Studio</span>
             </Link>
           </div>
         )}
       </div>
 
-      {/* Forged Frequency Brand Banner footer in sidebar */}
-      <div className="p-3 m-3 rounded-xl bg-gradient-to-br from-[#1a1412] to-[#121111] border border-[#ff4500]/20">
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-[10px] font-mono tracking-widest uppercase text-[#ffb13b] font-bold">
-            Live Stream
-          </span>
-          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+      {/* Bottom Unlock More CTA Card */}
+      {!currentUser && (
+        <div className="p-3 m-3 rounded-2xl bg-gradient-to-b from-[#161418] to-[#0f0e11] border border-[#2a282e] shadow-xl text-center space-y-2">
+          <div className="flex justify-center">
+            <div className="p-2 rounded-full bg-[#ffb13b]/10 text-[#ffb13b]">
+              <Crown className="w-4 h-4 fill-current" />
+            </div>
+          </div>
+          <h4 className="font-heading text-xs font-bold text-white tracking-wide">
+            Unlock More
+          </h4>
+          <p className="text-[10px] text-[#a5a6af] leading-relaxed">
+            Save episodes, create playlists, join the community and more.
+          </p>
+          <button
+            onClick={() =>
+              openAuthModal({
+                title: "Unlock More Features",
+                description:
+                  "Create a free listener account to save your favorite episodes, organize playlists, and join discussions.",
+              })
+            }
+            className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-[#ff4500] to-[#e63900] text-white font-heading font-bold text-[11px] tracking-wide hover:shadow-[0_0_15px_rgba(255,69,0,0.6)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+          >
+            Create a Free Account
+          </button>
         </div>
-        <p className="text-xs text-[#a5a6af] font-body line-clamp-2">
-          Faith has a frequency. The Word. Amplified.
-        </p>
-      </div>
+      )}
     </aside>
   );
 }

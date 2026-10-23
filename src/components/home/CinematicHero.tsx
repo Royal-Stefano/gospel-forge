@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Play, Sparkles, ChevronRight, Flame } from "lucide-react";
+import { Play, Music, Users, BookOpen, Heart } from "lucide-react";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
 import { EPISODES } from "@/data/mockData";
 
@@ -41,14 +41,14 @@ export function CinematicHero() {
 
     const colors = ["#ff4500", "#ffb13b", "#8f1609", "#ffd700"];
 
-    for (let i = 0; i < 40; i++) {
+    for (let i = 0; i < 35; i++) {
       particles.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        size: Math.random() * 2.5 + 0.5,
-        speedY: -(Math.random() * 0.8 + 0.3),
-        speedX: (Math.random() - 0.5) * 0.4,
-        opacity: Math.random() * 0.7 + 0.2,
+        size: Math.random() * 2 + 0.5,
+        speedY: -(Math.random() * 0.7 + 0.2),
+        speedX: (Math.random() - 0.5) * 0.3,
+        opacity: Math.random() * 0.6 + 0.2,
         color: colors[Math.floor(Math.random() * colors.length)],
       });
     }
@@ -67,7 +67,7 @@ export function CinematicHero() {
         ctx.save();
         ctx.globalAlpha = p.opacity;
         ctx.fillStyle = p.color;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 6;
         ctx.shadowColor = p.color;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
@@ -91,11 +91,20 @@ export function CinematicHero() {
   };
 
   return (
-    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#120a07] via-[#0d0908] to-[#080706] border border-[#ff4500]/20 mx-4 md:mx-8 my-6 p-6 md:p-12 shadow-[0_20px_60px_rgba(0,0,0,0.8)]">
-      {/* Background Volcanic Rock and Glow effects */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#ff4500]/15 via-transparent to-transparent pointer-events-none" />
-      <div className="absolute -top-32 -right-32 w-96 h-96 bg-[#ff4500]/20 rounded-full blur-3xl pointer-events-none animate-ember-pulse" />
-      <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-[#8f1609]/25 rounded-full blur-3xl pointer-events-none" />
+    <section className="relative overflow-hidden rounded-3xl min-h-[380px] sm:min-h-[420px] md:min-h-[460px] mx-4 md:mx-8 mt-4 mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-[#ff4500]/25">
+      {/* Background Cinematic Image (Sunset mountain with volcanic cross & traveler) */}
+      <div className="absolute inset-0">
+        <Image
+          src="/images/hero-volcanic-cross.jpg"
+          alt="The Gospel Audio Universe - Faith has a Frequency"
+          fill
+          className="object-cover object-right-top"
+          priority
+        />
+        {/* Left Dark Gradient Overlay for optimal text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#080706] via-[#080706]/85 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#080706] via-transparent to-black/30" />
+      </div>
 
       {/* Floating Embers Canvas Overlay */}
       <canvas
@@ -103,36 +112,32 @@ export function CinematicHero() {
         className="absolute inset-0 w-full h-full pointer-events-none z-10"
       />
 
-      <div className="relative z-20 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-        {/* Left Column: Headlines & CTAs */}
-        <div className="lg:col-span-7 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#1c1b1b]/90 border border-[#ff4500]/40 text-[#ffb13b] text-xs font-mono tracking-widest uppercase shadow-[0_0_15px_rgba(255,69,0,0.2)]">
-            <Flame className="w-3.5 h-3.5 text-[#ff4500] animate-pulse" />
-            <span>The Gospel Audio Universe</span>
-          </div>
+      {/* Foreground Content */}
+      <div className="relative z-20 p-6 sm:p-10 md:p-12 flex flex-col justify-between h-full max-w-3xl space-y-8">
+        <div className="space-y-4">
+          {/* Tracking-widest Monospace Tag */}
+          <p className="font-mono text-[11px] sm:text-xs text-[#ffb13b] tracking-[0.25em] uppercase font-bold">
+            THE GOSPEL AUDIO UNIVERSE :
+          </p>
 
-          <div className="space-y-2">
-            <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
-              FAITH HAS A{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#ff4500] via-[#ffb13b] to-[#ff4500] text-glow-molten">
-                FREQUENCY.
-              </span>
-            </h1>
-            <p className="font-heading text-lg sm:text-xl font-bold tracking-widest text-[#a5a6af] uppercase">
-              The Word. Amplified.
-            </p>
-          </div>
+          {/* Main Hero Title */}
+          <h1 className="font-heading text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-white leading-tight">
+            FAITH HAS A{" "}
+            <span className="block sm:inline text-transparent bg-clip-text bg-gradient-to-r from-[#ff4500] via-[#ffb13b] to-[#ff4500] text-glow-molten">
+              FREQUENCY.
+            </span>
+          </h1>
 
-          <p className="text-sm sm:text-base text-[#a5a6af] max-w-xl font-body leading-relaxed">
+          {/* Subtitle */}
+          <p className="text-sm sm:text-base text-[#d0cfd6] font-sans max-w-xl">
             Stories, truths, and conversations that ignite a deeper faith.
-            Forged in truth, produced for eternity.
           </p>
 
           {/* CTA Buttons matching reference design */}
-          <div className="flex flex-wrap items-center gap-4 pt-2">
+          <div className="flex items-center gap-3.5 pt-2">
             <button
               onClick={handleStartListening}
-              className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-full bg-gradient-to-r from-[#ff4500] to-[#ffb13b] text-[#080706] font-heading font-bold text-sm tracking-wider uppercase hover:shadow-[0_0_30px_rgba(255,69,0,0.7)] hover:scale-105 active:scale-95 transition-all duration-300"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-[#ff4500] to-[#e63900] text-white font-heading font-bold text-xs sm:text-sm tracking-wide hover:shadow-[0_0_25px_rgba(255,69,0,0.7)] hover:scale-105 active:scale-95 transition-all duration-200"
             >
               <Play className="w-4 h-4 fill-current ml-0.5" />
               <span>Start Listening</span>
@@ -140,39 +145,64 @@ export function CinematicHero() {
 
             <Link
               href="/browse"
-              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-full bg-[#1c1b1b]/80 hover:bg-[#252426] border border-[#2e2d2f] hover:border-[#ff4500]/50 text-white font-heading font-semibold text-sm tracking-wider uppercase transition-all duration-300"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#121113]/85 hover:bg-[#1c1b1f] border border-[#2e2d33] hover:border-[#ff4500]/50 text-white font-heading font-semibold text-xs sm:text-sm tracking-wide transition-all duration-200 backdrop-blur-sm"
             >
-              <span>Browse Shows</span>
-              <ChevronRight className="w-4 h-4 text-[#a5a6af]" />
+              <span>Explore Shows</span>
             </Link>
-          </div>
-
-          {/* Live metadata pill */}
-          <div className="pt-4 flex items-center gap-6 text-xs font-mono text-[#6e6f77]">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[#a5a6af]">Over 60+ Forged Episodes</span>
-            </div>
-            <span>•</span>
-            <span className="text-[#ffb13b]">Continuous Hi-Fi Audio</span>
           </div>
         </div>
 
-        {/* Right Column: Original Gospel Forge Metallic Fire Emblem */}
-        <div className="lg:col-span-5 flex justify-center items-center">
-          <div className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 group">
-            {/* Molten Glow ring behind logo */}
-            <div className="absolute inset-4 rounded-full bg-gradient-to-tr from-[#8f1609] via-[#ff4500] to-[#ffb13b] opacity-50 blur-2xl group-hover:opacity-80 transition-opacity duration-700 animate-pulse" />
+        {/* 4 Feature Badges Row (Bottom of Hero matching image) */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-[#2a292f]/60">
+          {/* Feature 1 */}
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-[#ffb13b]/10 text-[#ffb13b] shrink-0 border border-[#ffb13b]/20">
+              <Music className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-heading text-xs font-bold text-white truncate">
+                Real Conversations
+              </p>
+              <p className="text-[10px] text-[#a5a6af] truncate">Life. Faith. Purpose.</p>
+            </div>
+          </div>
 
-            {/* Circular frame containing the authentic Gospel Forge Logo */}
-            <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-[#ff4500]/40 shadow-[0_0_50px_rgba(255,69,0,0.4)] group-hover:border-[#ff4500] transition-all duration-500">
-              <Image
-                src="/images/gospel-forge-emblem.jpg"
-                alt="Gospel Forge Sacred Emblem"
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-700"
-                priority
-              />
+          {/* Feature 2 */}
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-[#ff4500]/10 text-[#ff4500] shrink-0 border border-[#ff4500]/20">
+              <Users className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-heading text-xs font-bold text-white truncate">
+                Powerful Voices
+              </p>
+              <p className="text-[10px] text-[#a5a6af] truncate">Pastors, creators, believers.</p>
+            </div>
+          </div>
+
+          {/* Feature 3 */}
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-[#ffb13b]/10 text-[#ffb13b] shrink-0 border border-[#ffb13b]/20">
+              <BookOpen className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-heading text-xs font-bold text-white truncate">
+                Rooted in Scripture
+              </p>
+              <p className="text-[10px] text-[#a5a6af] truncate">Truth for real life.</p>
+            </div>
+          </div>
+
+          {/* Feature 4 */}
+          <div className="flex items-center gap-2.5">
+            <div className="p-2 rounded-lg bg-[#ff4500]/10 text-[#ff4500] shrink-0 border border-[#ff4500]/20">
+              <Heart className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-heading text-xs font-bold text-white truncate">
+                A Growing Community
+              </p>
+              <p className="text-[10px] text-[#a5a6af] truncate">Listen. Learn. Connect.</p>
             </div>
           </div>
         </div>
