@@ -54,9 +54,8 @@ export function PersistentPlayer() {
   const [isShuffle, setIsShuffle] = useState(false);
   const [isRepeat, setIsRepeat] = useState(false);
 
-  // Suppress player inside Gospel Forge Studio or full-screen Auth / Onboarding pages
+  // Suppress player on full-screen Auth / Onboarding pages
   if (
-    pathname?.startsWith("/studio") ||
     pathname === "/signup" ||
     pathname === "/login" ||
     pathname?.startsWith("/artist") ||
