@@ -382,3 +382,31 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
     repliesCount: 4,
   },
 ];
+
+
+export const USER_PLAYLISTS: Playlist[] = [
+  {
+    id: "pl-1",
+    title: "Morning Refinement",
+    description: "Sermons and scriptural meditation to anchor your day in truth.",
+    artworkUrl: "/images/card-forge-podcast.jpg",
+    episodeCount: 5,
+    updatedAt: "2 days ago",
+  },
+  {
+    id: "pl-2",
+    title: "Spiritual Warfare & Courage",
+    description: "Messages on standing firm, prayer endurance, and conquering anxiety.",
+    artworkUrl: "/images/card-faith-action.jpg",
+    episodeCount: 8,
+    updatedAt: "1 week ago",
+  },
+  {
+    id: "pl-3",
+    title: "Kingdom Wisdom & Theology",
+    description: "Deep theological reflections on the character and sovereignty of God.",
+    artworkUrl: "/images/card-kingdom-minds.jpg",
+    episodeCount: 4,
+    updatedAt: "3 weeks ago",
+  },
+];

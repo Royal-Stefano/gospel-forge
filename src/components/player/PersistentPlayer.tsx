@@ -54,8 +54,14 @@ export function PersistentPlayer() {
   const [isShuffle, setIsShuffle] = useState(false);
   const [isRepeat, setIsRepeat] = useState(false);
 
-  // Suppress player inside Gospel Forge Studio
-  if (pathname?.startsWith("/studio") || !currentEpisode) return null;
+  // Suppress player inside Gospel Forge Studio or full-screen Auth pages
+  if (
+    pathname?.startsWith("/studio") ||
+    pathname === "/signup" ||
+    pathname === "/login" ||
+    !currentEpisode
+  )
+    return null;
 
   const isSaved = isEpisodeSaved(currentEpisode.id);
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
