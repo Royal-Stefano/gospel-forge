@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
+import { GospelForgeEmblem } from "@/components/brand/GospelForgeEmblem";
+import { VolcanicSummitCathedral } from "@/components/brand/VolcanicSummitCathedral";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -111,14 +112,7 @@ export default function ArtistOnboardingPage() {
     <div className="relative min-h-screen bg-[#080706] text-[#f5f0ea] overflow-x-hidden flex flex-col justify-between select-none">
       {/* 1. BACKGROUND CATHEDRAL ENVIRONMENT WITH ARTIST & SUMMIT CROSS */}
       <div className="fixed inset-0 pointer-events-none z-0">
-        <Image
-          src="/images/artist-onboarding-bg.jpg"
-          alt="Gospel Forge Artist Background"
-          fill
-          className="object-cover object-center"
-          priority
-        />
-        {/* Dark Vignette Overlay for crisp focus on the wizard card */}
+        <VolcanicSummitCathedral intensity="hero" />
         <div className="absolute inset-0 bg-[#080706]/40 backdrop-blur-[2px]" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#080706] via-transparent to-[#080706]/70" />
       </div>
@@ -127,14 +121,7 @@ export default function ArtistOnboardingPage() {
       <header className="relative z-20 h-16 sm:h-20 px-4 md:px-10 flex items-center justify-between gap-4 border-b border-[#222025]/40 backdrop-blur-md">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden border border-[#ff4500]/60 shadow-[0_0_15px_rgba(255,69,0,0.4)]">
-            <Image
-              src="/images/gospel-forge-emblem.jpg"
-              alt="Gospel Forge"
-              fill
-              className="object-cover group-hover:scale-105 transition-transform"
-            />
-          </div>
+          <GospelForgeEmblem className="w-9 h-9 sm:w-10 sm:h-10 group-hover:scale-105 transition-transform" />
           <span className="font-heading font-extrabold text-sm sm:text-base tracking-wider text-white">
             GOSPEL <span className="text-[#ff4500]">FORGE</span>
           </span>

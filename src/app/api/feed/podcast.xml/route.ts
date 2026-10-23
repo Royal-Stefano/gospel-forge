@@ -19,7 +19,7 @@ export async function GET() {
       <itunes:name>David K. Cole</itunes:name>
       <itunes:email>podcast@gospelforge.com</itunes:email>
     </itunes:owner>
-    <itunes:image href="https://gospelforge.com/images/gospel-forge-emblem.jpg" />
+    <itunes:image href="https://images.unsplash.com/photo-1544717305-2782549b5136?w=1400&amp;auto=format&amp;fit=crop&amp;q=80" />
     <itunes:category text="Religion &amp; Spirituality">
       <itunes:category text="Christianity" />
     </itunes:category>

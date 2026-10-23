@@ -17,6 +17,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
 import { cn } from "@/lib/utils";
+import { GospelForgeEmblem } from "@/components/brand/GospelForgeEmblem";
 
 export function ContextualAuthModal() {
   const {
@@ -114,14 +115,7 @@ export function ContextualAuthModal() {
 
         {/* Brand Pill */}
         <div className="flex items-center gap-2 mb-4">
-          <div className="relative w-7 h-7 rounded-full overflow-hidden border border-[#ff4500]/50">
-            <Image
-              src="/images/gospel-forge-emblem.jpg"
-              alt="Gospel Forge"
-              fill
-              className="object-cover"
-            />
-          </div>
+          <GospelForgeEmblem className="w-7 h-7" size={28} />
           <span className="font-heading font-bold text-xs tracking-wider text-white">
             GOSPEL <span className="text-[#ff4500]">FORGE</span>
           </span>

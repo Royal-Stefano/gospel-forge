@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { VolcanicSummitCathedral } from "@/components/brand/VolcanicSummitCathedral";
 import {
   Bookmark,
   ListMusic,
@@ -83,16 +84,9 @@ export default function ListenerLibraryPage() {
     <div className="px-4 md:px-8 py-6 space-y-8 pb-16">
       {/* 1. LIBRARY HERO OVERVIEW BANNER */}
       <div className="relative overflow-hidden rounded-3xl p-6 sm:p-10 border border-[#ff4500]/25 bg-gradient-to-r from-[#17100e] via-[#120f12] to-[#0d0b0e] shadow-xl">
-        {/* Background Image Overlay with mountain horizon & traveler */}
-        <div className="absolute inset-0 opacity-40 pointer-events-none">
-          <Image
-            src="/images/hero-volcanic-cross.jpg"
-            alt="Horizon"
-            fill
-            className="object-cover object-right"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0d0b0e] via-[#0d0b0e]/80 to-transparent" />
-        </div>
+        {/* Programmatic Vector Summit & Volcanic Horizon */}
+        <VolcanicSummitCathedral intensity="medium" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d0b0e] via-[#0d0b0e]/85 to-transparent pointer-events-none" />
 
         <div className="relative z-10 space-y-4">
           <div>

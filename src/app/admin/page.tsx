@@ -31,6 +31,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { usePodcastStore } from "@/context/PodcastStoreContext";
 import { cn } from "@/lib/utils";
+import { VolcanicSummitCathedral } from "@/components/brand/VolcanicSummitCathedral";
 
 export default function AdminDashboardPage() {
   const { currentUser } = useAuth();
@@ -98,16 +99,8 @@ export default function AdminDashboardPage() {
       {/* ================= 1. WELCOME HERO BANNER ================= */}
       <div className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-[#141217] via-[#1a141b] to-[#120f14] border border-[#26232b] p-6 lg:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-2xl">
         {/* Background Visual Overlay */}
-        <div className="absolute inset-0 pointer-events-none opacity-40 mix-blend-screen overflow-hidden">
-          <Image
-            src="/images/hero-volcanic-cross.jpg"
-            alt="Volcanic Summit Cross"
-            fill
-            className="object-cover object-center"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0d0c0f] via-[#0d0c0f]/70 to-transparent" />
-        </div>
+        <VolcanicSummitCathedral intensity="medium" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0d0c0f] via-[#0d0c0f]/75 to-transparent pointer-events-none" />
 
         {/* Welcome Text */}
         <div className="relative z-10 space-y-1.5 max-w-xl">
@@ -607,7 +600,7 @@ export default function AdminDashboardPage() {
                     status: "Published",
                     plays: "2.4K",
                     date: "Oct 12, 2024",
-                    artwork: "/images/card-forge-podcast.jpg",
+                    artwork: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80",
                   },
                   {
                     title: "Faith Over Fear",
@@ -616,7 +609,7 @@ export default function AdminDashboardPage() {
                     status: "Published",
                     plays: "1.8K",
                     date: "Oct 5, 2024",
-                    artwork: "/images/card-faith-action.jpg",
+                    artwork: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&auto=format&fit=crop&q=80",
                   },
                   {
                     title: "A Life That Matters",
@@ -625,7 +618,7 @@ export default function AdminDashboardPage() {
                     status: "Scheduled",
                     plays: "-",
                     date: "Oct 28, 2024",
-                    artwork: "/images/card-kingdom-minds.jpg",
+                    artwork: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=400&auto=format&fit=crop&q=80",
                   },
                   {
                     title: "Finding God in the Ordinary",
@@ -634,7 +627,7 @@ export default function AdminDashboardPage() {
                     status: "Published",
                     plays: "3.2K",
                     date: "Sep 21, 2024",
-                    artwork: "/images/card-everyday-grace.jpg",
+                    artwork: "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=400&auto=format&fit=crop&q=80",
                   },
                 ].map((ep) => (
                   <tr key={ep.title} className="hover:bg-[#161519] transition-colors">
@@ -878,31 +871,31 @@ export default function AdminDashboardPage() {
                 rank: 1,
                 title: "A Life That Matters",
                 plays: "3.2K plays",
-                image: "/images/card-kingdom-minds.jpg",
+                image: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?w=400&auto=format&fit=crop&q=80",
               },
               {
                 rank: 2,
                 title: "Purpose in the Process",
                 plays: "2.4K plays",
-                image: "/images/card-forge-podcast.jpg",
+                image: "https://images.unsplash.com/photo-1544717305-2782549b5136?w=400&auto=format&fit=crop&q=80",
               },
               {
                 rank: 3,
                 title: "Faith Over Fear",
                 plays: "1.8K plays",
-                image: "/images/card-faith-action.jpg",
+                image: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400&auto=format&fit=crop&q=80",
               },
               {
                 rank: 4,
                 title: "Walking in Purpose",
                 plays: "1.1K plays",
-                image: "/images/card-everyday-grace.jpg",
+                image: "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=400&auto=format&fit=crop&q=80",
               },
               {
                 rank: 5,
                 title: "Real Talk: Faith and Culture",
                 plays: "980 plays",
-                image: "/images/card-real-talk.jpg",
+                image: "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=400&auto=format&fit=crop&q=80",
               },
             ].map((ep) => (
               <div

@@ -40,12 +40,12 @@ export const metadata: Metadata = {
   description:
     "Faith has a frequency. The Word. Amplified. Stream powerful Christian podcasts, biblical series, and faith conversations.",
   icons: {
-    icon: "/images/gospel-forge-emblem.jpg",
+    icon: "/favicon.ico",
   },
   openGraph: {
     title: "Gospel Forge — The Forged Frequency",
     description: "Faith has a frequency. The Word. Amplified.",
-    images: ["/images/gospel-forge-emblem.jpg"],
+    images: ["https://images.unsplash.com/photo-1544717305-2782549b5136?w=1200&auto=format&fit=crop&q=80"],
   },
 };
 

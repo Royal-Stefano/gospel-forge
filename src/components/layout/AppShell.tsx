@@ -24,6 +24,7 @@ import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
 import { cn } from "@/lib/utils";
+import { GospelForgeEmblem } from "@/components/brand/GospelForgeEmblem";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -66,14 +67,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="relative w-72 max-w-[80vw] bg-[#0e0d0e] border-r border-[#222123] p-5 flex flex-col z-10 animate-in slide-in-from-left duration-200">
               <div className="flex items-center justify-between pb-4 border-b border-[#222123]">
                 <div className="flex items-center gap-2.5">
-                  <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#ff4500]/50">
-                    <Image
-                      src="/images/gospel-forge-emblem.jpg"
-                      alt="Gospel Forge"
-                      fill
-                      className="object-cover"
-                    />
-                  </div>
+                  <GospelForgeEmblem className="w-8 h-8" />
                   <span className="font-heading font-extrabold text-sm tracking-wide text-white">
                     GOSPEL <span className="text-[#ff4500]">FORGE</span>
                   </span>

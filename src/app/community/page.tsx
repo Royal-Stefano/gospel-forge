@@ -142,7 +142,7 @@ export default function CommunityPage() {
         <div className="flex items-start gap-3">
           <div className="relative w-10 h-10 rounded-full overflow-hidden shrink-0 border border-[#2a2929]">
             <Image
-              src={currentUser?.avatarUrl || "/images/gospel-forge-emblem.jpg"}
+              src={currentUser?.avatarUrl || "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80"}
               alt={currentUser?.displayName || "Guest"}
               fill
               className="object-cover"

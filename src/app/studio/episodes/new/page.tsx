@@ -44,6 +44,7 @@ import { usePodcastStore } from "@/context/PodcastStoreContext";
 import { useAuth } from "@/context/AuthContext";
 import type { Episode, PublicationStatus } from "@/types";
 import { formatTime, cn } from "@/lib/utils";
+import { VolcanicSummitCathedral } from "@/components/brand/VolcanicSummitCathedral";
 
 export default function NewEpisodeWizardPage() {
   const router = useRouter();
@@ -92,22 +93,22 @@ export default function NewEpisodeWizardPage() {
 
   // Artwork & Media State
   const [artworkUrl, setArtworkUrl] = useState<string>(
-    "/images/card-forge-podcast.jpg"
+    "https://images.unsplash.com/photo-1544717305-2782549b5136?w=1000&auto=format&fit=crop&q=80"
   );
   const [bannerUrl, setBannerUrl] = useState<string>(
-    "/images/hero-volcanic-cross.jpg"
+    "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200&auto=format&fit=crop&q=80"
   );
   const [audioThumbnailUrl, setAudioThumbnailUrl] = useState<string>(
-    "/images/ep-purpose-detail-hero.jpg"
+    "https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=600&auto=format&fit=crop&q=80"
   );
   const artworkInputRef = useRef<HTMLInputElement>(null);
 
   // Gallery Images
   const [galleryImages, setGalleryImages] = useState<string[]>([
-    "/images/hero-volcanic-cross.jpg",
-    "/images/card-everyday-grace.jpg",
-    "/images/card-faith-action.jpg",
-    "/images/card-young-chosen.jpg",
+    "https://images.unsplash.com/photo-1544717305-2782549b5136?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1507692049790-de58290a4334?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1509099836639-18ba1795216d?w=800&auto=format&fit=crop&q=80",
+    "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=800&auto=format&fit=crop&q=80",
   ]);
 
   // Publishing Options State
@@ -255,17 +256,7 @@ export default function NewEpisodeWizardPage() {
   return (
     <div className="relative min-h-screen text-[#f5f0ea] p-4 sm:p-6 lg:p-8">
       {/* Top Background Sunset Glow and Summit Cross */}
-      <div className="absolute top-0 right-0 w-[55%] h-[400px] pointer-events-none opacity-20 lg:opacity-30 mix-blend-screen overflow-hidden">
-        <Image
-          src="/images/hero-volcanic-cross.jpg"
-          alt="Volcanic Summit Cross"
-          fill
-          className="object-cover object-top"
-          priority
-        />
-        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-[#080706]/70 to-[#080706]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#080706]/40 to-[#080706]" />
-      </div>
+      <VolcanicSummitCathedral intensity="subtle" />
 
       <div className="relative max-w-7xl mx-auto space-y-6">
         {/* ================= HEADER SECTION ================= */}
@@ -914,7 +905,7 @@ export default function NewEpisodeWizardPage() {
 
                   <button
                     type="button"
-                    onClick={() => setArtworkUrl("/images/card-forge-podcast.jpg")}
+                    onClick={() => setArtworkUrl("https://images.unsplash.com/photo-1544717305-2782549b5136?w=1000&auto=format&fit=crop&q=80")}
                     className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#1b191e] hover:bg-[#2a1717] text-xs font-semibold text-[#888] hover:text-[#ff4500] border border-[#2f2d38] transition-all"
                   >
                     <Trash2 className="w-3.5 h-3.5" />

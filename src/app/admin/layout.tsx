@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
+import { GospelForgeEmblem } from "@/components/brand/GospelForgeEmblem";
 
 export default function AdminLayout({
   children,
@@ -145,14 +146,7 @@ export default function AdminLayout({
           {/* Brand Logo Header */}
           <div className="h-16 px-5 border-b border-[#1c1b1f] flex items-center justify-between">
             <Link href="/" className="flex items-center gap-3">
-              <div className="relative w-9 h-9 rounded-full overflow-hidden shadow-[0_0_12px_rgba(255,69,0,0.4)]">
-                <Image
-                  src="/images/gospel-forge-emblem.jpg"
-                  alt="Gospel Forge Emblem"
-                  fill
-                  className="object-cover"
-                />
-              </div>
+              <GospelForgeEmblem className="w-9 h-9" />
               <div className="flex flex-col">
                 <span className="font-heading text-sm font-black tracking-wider text-white">
                   GOSPEL

@@ -27,6 +27,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
 import { PersistentPlayer } from "@/components/player/PersistentPlayer";
+import { GospelForgeEmblem } from "@/components/brand/GospelForgeEmblem";
 
 export default function StudioLayout({
   children,
@@ -144,15 +145,7 @@ export default function StudioLayout({
           {/* Logo Section */}
           <div className="pt-5 pb-3 px-4 flex justify-center">
             <Link href="/" className="group flex flex-col items-center">
-              <div className="relative w-20 h-20 rounded-full overflow-hidden border border-[#ff4500]/50 group-hover:border-[#ff4500] transition-all duration-300 shadow-[0_0_20px_rgba(255,69,0,0.4)]">
-                <Image
-                  src="/images/gospel-forge-emblem.jpg"
-                  alt="Gospel Forge"
-                  fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-300"
-                  priority
-                />
-              </div>
+              <GospelForgeEmblem className="w-20 h-20 group-hover:scale-105 transition-transform duration-300" size={80} />
             </Link>
           </div>
 

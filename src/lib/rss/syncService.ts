@@ -83,7 +83,7 @@ export async function parseRssFeed(xmlText: string): Promise<ParsedEpisode[]> {
       const artworkUrl =
         data["itunes:image"]?.["@_href"] ||
         channelImage ||
-        "/images/gospel-forge-emblem.jpg";
+        "https://images.unsplash.com/photo-1544717305-2782549b5136?w=1400&auto=format&fit=crop&q=80";
 
       results.push({
         guid,

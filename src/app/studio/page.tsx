@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { VolcanicSummitCathedral } from "@/components/brand/VolcanicSummitCathedral";
 import {
   UploadCloud,
   Headphones,
@@ -95,17 +96,9 @@ export default function ArtistStudioDashboard() {
     <div className="px-4 md:px-8 py-6 space-y-7 max-w-[1600px] mx-auto select-none">
       {/* 1. CREATOR STUDIO HERO BANNER */}
       <div className="relative overflow-hidden rounded-3xl p-6 sm:p-10 border border-[#ff4500]/25 bg-gradient-to-r from-[#170e0b] via-[#121113] to-[#0c0b0c] shadow-2xl min-h-[160px] sm:min-h-[180px] flex flex-col justify-center">
-        {/* Background Image Overlay with Studio Producer at Desks overlooking the Mountain Cross */}
-        <div className="absolute inset-0 opacity-45 pointer-events-none">
-          <Image
-            src="/images/studio-hero-bg.jpg"
-            alt="Creator Studio"
-            fill
-            className="object-cover object-right"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0c0b0c] via-[#0c0b0c]/85 to-transparent" />
-        </div>
+        {/* Programmatic Vector Summit & Volcanic Glow */}
+        <VolcanicSummitCathedral intensity="medium" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0c0b0c] via-[#0c0b0c]/85 to-transparent pointer-events-none" />
 
         <div className="relative z-10 space-y-1 max-w-xl">
           <p className="font-mono text-[10px] text-[#ff4500] font-bold tracking-[0.25em] uppercase">

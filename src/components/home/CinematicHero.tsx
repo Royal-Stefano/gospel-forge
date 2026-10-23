@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import Image from "next/image";
+import { VolcanicSummitCathedral } from "@/components/brand/VolcanicSummitCathedral";
 import Link from "next/link";
 import { Play, Music, Users, BookOpen, Heart } from "lucide-react";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
@@ -92,19 +92,11 @@ export function CinematicHero() {
 
   return (
     <section className="relative overflow-hidden rounded-3xl min-h-[380px] sm:min-h-[420px] md:min-h-[460px] mx-4 md:mx-8 mt-4 mb-8 shadow-[0_20px_50px_rgba(0,0,0,0.8)] border border-[#ff4500]/25">
-      {/* Background Cinematic Image (Sunset mountain with volcanic cross & traveler) */}
-      <div className="absolute inset-0">
-        <Image
-          src="/images/hero-volcanic-cross.jpg"
-          alt="The Gospel Audio Universe - Faith has a Frequency"
-          fill
-          className="object-cover object-right-top"
-          priority
-        />
-        {/* Left Dark Gradient Overlay for optimal text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#080706] via-[#080706]/85 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#080706] via-transparent to-black/30" />
-      </div>
+      {/* Programmatic Cinematic Vector Summit & Volcanic Glow */}
+      <VolcanicSummitCathedral intensity="hero" />
+      {/* Left Dark Gradient Overlay for optimal text legibility */}
+      <div className="absolute inset-0 bg-gradient-to-r from-[#080706] via-[#080706]/90 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#080706] via-transparent to-black/40" />
 
       {/* Floating Embers Canvas Overlay */}
       <canvas

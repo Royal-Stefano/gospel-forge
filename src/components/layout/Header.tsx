@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Search, Menu, User, Flame } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { CommandHUD } from "@/components/navigation/CommandHUD";
+import { GospelForgeEmblem } from "@/components/brand/GospelForgeEmblem";
 
 interface HeaderProps {
   onToggleMobileNav?: () => void;
@@ -50,14 +51,7 @@ export function Header({ onToggleMobileNav }: HeaderProps) {
             <Menu className="w-5 h-5" />
           </button>
           <Link href="/" className="flex items-center gap-2">
-            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#ff4500]/50 shadow-[0_0_10px_rgba(255,69,0,0.4)]">
-              <Image
-                src="/images/gospel-forge-emblem.jpg"
-                alt="Gospel Forge"
-                fill
-                className="object-cover"
-              />
-            </div>
+            <GospelForgeEmblem className="w-8 h-8" />
             <span className="font-heading font-extrabold text-sm tracking-wide text-white">
               GOSPEL <span className="text-[#ff4500]">FORGE</span>
             </span>

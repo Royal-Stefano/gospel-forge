@@ -37,7 +37,7 @@ export default function PlaylistsPage() {
           >
             <div className="relative w-20 h-20 rounded-xl overflow-hidden shrink-0 border border-[#2a2929]">
               <Image
-                src={playlist.coverUrl || "/images/gospel-forge-emblem.jpg"}
+                src={playlist.coverUrl || "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800&auto=format&fit=crop&q=80"}
                 alt={playlist.title}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform"

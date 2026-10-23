@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Lock, Mail, ArrowRight, ShieldCheck, Flame, AlertCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { GospelForgeEmblem } from "@/components/brand/GospelForgeEmblem";
 
 export default function StudioLoginPage() {
   const router = useRouter();
@@ -48,13 +49,8 @@ export default function StudioLoginPage() {
       <div className="max-w-md w-full p-8 rounded-3xl bg-[#111113] border border-[#ff4500]/30 shadow-2xl space-y-6">
         {/* Header */}
         <div className="text-center space-y-2">
-          <div className="relative w-16 h-16 mx-auto rounded-full overflow-hidden border-2 border-[#ff4500] shadow-[0_0_20px_rgba(255,69,0,0.5)]">
-            <Image
-              src="/images/gospel-forge-emblem.jpg"
-              alt="Gospel Forge"
-              fill
-              className="object-cover"
-            />
+          <div className="flex justify-center">
+            <GospelForgeEmblem className="w-16 h-16 shadow-[0_0_20px_rgba(255,69,0,0.5)]" size={64} />
           </div>
           <h1 className="font-heading text-2xl font-extrabold text-white tracking-wide">
             GOSPEL FORGE <span className="text-[#ff4500]">STUDIO</span>

@@ -544,15 +544,8 @@ export default function EpisodeDetailPage() {
           {/* Unlock More Callout Card with Volcanic Mountain Background */}
           {!currentUser && (
             <div className="relative overflow-hidden p-6 rounded-3xl border border-[#ff4500]/30 shadow-2xl text-center space-y-3">
-              <div className="absolute inset-0 opacity-40 pointer-events-none">
-                <Image
-                  src="/images/hero-volcanic-cross.jpg"
-                  alt="Background"
-                  fill
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-[#080706]/75" />
-              </div>
+              <div className="absolute inset-0 bg-gradient-to-b from-[#181318] via-[#120f14] to-[#080706] pointer-events-none" />
+              <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,69,0,0.25)_0%,transparent_70%)] pointer-events-none" />
 
               <div className="relative z-10 space-y-2">
                 <div className="flex justify-center">

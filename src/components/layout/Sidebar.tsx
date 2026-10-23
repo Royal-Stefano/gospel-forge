@@ -19,6 +19,7 @@ import {
   Flame,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { GospelForgeEmblem } from "@/components/brand/GospelForgeEmblem";
 import { useAuth } from "@/context/AuthContext";
 
 interface NavItem {
@@ -52,15 +53,7 @@ export function Sidebar() {
       {/* Brand Logo Section */}
       <div className="pt-6 pb-4 px-4 flex justify-center">
         <Link href="/" className="group flex flex-col items-center">
-          <div className="relative w-24 h-24 rounded-full overflow-hidden border border-[#ff4500]/50 group-hover:border-[#ff4500] transition-all duration-300 shadow-[0_0_25px_rgba(255,69,0,0.4)]">
-            <Image
-              src="/images/gospel-forge-emblem.jpg"
-              alt="Gospel Forge"
-              fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              priority
-            />
-          </div>
+          <GospelForgeEmblem className="w-24 h-24 group-hover:scale-105 transition-transform duration-300" size={96} />
         </Link>
       </div>
 
