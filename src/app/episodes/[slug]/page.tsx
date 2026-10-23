@@ -19,15 +19,17 @@ import {
   FileText,
   Info,
 } from "lucide-react";
-import { EPISODES, SERIES_LIST } from "@/data/mockData";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
+import { usePodcastStore } from "@/context/PodcastStoreContext";
 import { formatTime, formatDate, cn } from "@/lib/utils";
 
 export default function EpisodeDetailPage() {
   const params = useParams();
   const slug = params?.slug as string;
 
-  const episode = EPISODES.find((e) => e.slug === slug) || EPISODES[0];
+  const { getEpisodeBySlug, getPublishedEpisodes } = usePodcastStore();
+  const publishedEpisodes = getPublishedEpisodes();
+  const episode = getEpisodeBySlug(slug) || publishedEpisodes[0];
 
   const {
     currentEpisode,
@@ -46,8 +48,8 @@ export default function EpisodeDetailPage() {
   const isPlayingCurrent = isCurrent && isPlaying;
   const isSaved = isEpisodeSaved(episode.id);
 
-  const seriesEpisodes = EPISODES.filter(
-    (e) => e.seriesId === episode.seriesId && e.id !== episode.id
+  const seriesEpisodes = publishedEpisodes.filter(
+    (e) => e.seriesId === episode?.seriesId && e.id !== episode?.id
   );
 
   const handlePlayToggle = () => {

@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Search, Filter, Sparkles } from "lucide-react";
 import { EpisodeCard } from "@/components/podcast/EpisodeCard";
 import { SeriesCard } from "@/components/podcast/SeriesCard";
-import { SERIES_LIST, EPISODES } from "@/data/mockData";
+import { usePodcastStore } from "@/context/PodcastStoreContext";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
@@ -20,6 +20,8 @@ const CATEGORIES = [
 ];
 
 function BrowseContent() {
+  const { seriesList, getPublishedEpisodes } = usePodcastStore();
+  const publishedEpisodes = getPublishedEpisodes();
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
 
@@ -27,7 +29,7 @@ function BrowseContent() {
   const [selectedCategory, setSelectedCategory] = useState("All");
 
   const filteredEpisodes = useMemo(() => {
-    return EPISODES.filter((ep) => {
+    return publishedEpisodes.filter((ep) => {
       const matchesSearch =
         searchQuery === "" ||
         ep.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -90,7 +92,7 @@ function BrowseContent() {
           </h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {SERIES_LIST.map((series) => (
+          {seriesList.map((series) => (
             <SeriesCard key={series.id} series={series} />
           ))}
         </div>

@@ -4,8 +4,8 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Bell, Menu, X, Sparkles, User, Flame } from "lucide-react";
-import { CURRENT_USER } from "@/data/mockData";
+import { Search, Bell, Menu, X, Sparkles, User, Flame, Radio, LogIn } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 interface HeaderProps {
   onToggleMobileNav?: () => void;
@@ -13,6 +13,7 @@ interface HeaderProps {
 
 export function Header({ onToggleMobileNav }: HeaderProps) {
   const router = useRouter();
+  const { currentUser, canAccessStudio } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNotifications, setShowNotifications] = useState(false);
 
@@ -66,8 +67,19 @@ export function Header({ onToggleMobileNav }: HeaderProps) {
         </div>
       </form>
 
-      {/* Right controls: Notifications, User profile */}
+      {/* Right controls: Studio Shortcut, Notifications, User profile / Sign in */}
       <div className="flex items-center gap-3 sm:gap-4">
+        {/* Studio Link Shortcut if Staff */}
+        {canAccessStudio && (
+          <Link
+            href="/studio"
+            className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#ff4500]/15 hover:bg-[#ff4500]/25 border border-[#ff4500]/40 text-[#ffb13b] text-xs font-mono font-bold uppercase transition-all shadow-[0_0_10px_rgba(255,69,0,0.3)]"
+          >
+            <Flame className="w-3.5 h-3.5 text-[#ff4500] animate-pulse" />
+            <span>Studio</span>
+          </Link>
+        )}
+
         {/* Notifications */}
         <div className="relative">
           <button
@@ -105,28 +117,38 @@ export function Header({ onToggleMobileNav }: HeaderProps) {
           )}
         </div>
 
-        {/* User Pill */}
-        <Link
-          href="/profile"
-          className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full bg-[#141314] hover:bg-[#1c1b1b] border border-[#262527] hover:border-[#ff4500]/50 transition-all duration-200 group"
-        >
-          <div className="relative w-7 h-7 rounded-full overflow-hidden border border-[#ff4500]/40">
-            <Image
-              src={CURRENT_USER.avatarUrl}
-              alt={CURRENT_USER.displayName}
-              fill
-              className="object-cover"
-            />
-          </div>
-          <div className="hidden md:flex flex-col text-left">
-            <span className="text-[10px] text-[#a5a6af] leading-none">
-              Welcome back
-            </span>
-            <span className="text-xs font-semibold text-white group-hover:text-[#ffb13b] transition-colors leading-tight">
-              {CURRENT_USER.displayName}
-            </span>
-          </div>
-        </Link>
+        {/* User Pill or Sign In */}
+        {currentUser ? (
+          <Link
+            href="/profile"
+            className="flex items-center gap-2.5 p-1.5 pr-3 rounded-full bg-[#141314] hover:bg-[#1c1b1b] border border-[#262527] hover:border-[#ff4500]/50 transition-all duration-200 group"
+          >
+            <div className="relative w-7 h-7 rounded-full overflow-hidden border border-[#ff4500]/40">
+              <Image
+                src={currentUser.avatarUrl}
+                alt={currentUser.displayName}
+                fill
+                className="object-cover"
+              />
+            </div>
+            <div className="hidden md:flex flex-col text-left">
+              <span className="text-[10px] text-[#a5a6af] leading-none">
+                Welcome back
+              </span>
+              <span className="text-xs font-semibold text-white group-hover:text-[#ffb13b] transition-colors leading-tight truncate max-w-[120px]">
+                {currentUser.displayName}
+              </span>
+            </div>
+          </Link>
+        ) : (
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#1c1b1b] hover:bg-[#252426] border border-[#2e2d2f] text-xs font-semibold text-white transition-colors"
+          >
+            <LogIn className="w-3.5 h-3.5 text-[#ff4500]" />
+            <span>Sign In</span>
+          </Link>
+        )}
       </div>
     </header>
   );

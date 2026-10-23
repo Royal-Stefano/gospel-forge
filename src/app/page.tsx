@@ -18,17 +18,15 @@ import {
 import { CinematicHero } from "@/components/home/CinematicHero";
 import { EpisodeCard } from "@/components/podcast/EpisodeCard";
 import { SeriesCard } from "@/components/podcast/SeriesCard";
-import {
-  SERIES_LIST,
-  EPISODES,
-  SPEAKERS,
-  COMMUNITY_POSTS,
-} from "@/data/mockData";
+import { SPEAKERS, COMMUNITY_POSTS } from "@/data/mockData";
 import { useAudioPlayer } from "@/context/AudioPlayerContext";
+import { usePodcastStore } from "@/context/PodcastStoreContext";
 import { formatTime } from "@/lib/utils";
 
 export default function HomePage() {
   const { currentEpisode, isPlaying, togglePlay } = useAudioPlayer();
+  const { seriesList, getPublishedEpisodes } = usePodcastStore();
+  const publishedEpisodes = getPublishedEpisodes();
 
   const scriptures = [
     { ref: "Romans 8:28", desc: "God works all things together for good" },
@@ -124,7 +122,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          {SERIES_LIST.map((series) => (
+          {seriesList.map((series) => (
             <SeriesCard key={series.id} series={series} />
           ))}
         </div>
@@ -150,7 +148,7 @@ export default function HomePage() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {EPISODES.slice(0, 4).map((episode) => (
+          {publishedEpisodes.slice(0, 4).map((episode) => (
             <EpisodeCard key={episode.id} episode={episode} variant="vertical" />
           ))}
         </div>

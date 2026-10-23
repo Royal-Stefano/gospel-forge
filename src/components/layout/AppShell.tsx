@@ -38,6 +38,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { name: "Library", href: "/library", icon: Library },
   ];
 
+  // Do not render public streaming shell inside Gospel Forge Studio
+  if (pathname?.startsWith("/studio")) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-[#080706]">
       <div className="flex flex-1">

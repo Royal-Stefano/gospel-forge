@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Inter, Cinzel, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/context/AuthContext";
+import { PodcastStoreProvider } from "@/context/PodcastStoreContext";
 import { AudioPlayerProvider } from "@/context/AudioPlayerContext";
 import { PersistentPlayer } from "@/components/player/PersistentPlayer";
 import { AppShell } from "@/components/layout/AppShell";
@@ -57,10 +59,14 @@ export default function RootLayout({
       className={`${spaceGrotesk.variable} ${inter.variable} ${cinzel.variable} ${jetbrainsMono.variable} dark`}
     >
       <body className="min-h-screen bg-[#080706] text-[#F5F0EA] antialiased selection:bg-[#FF4500] selection:text-white flex flex-col font-sans">
-        <AudioPlayerProvider>
-          <AppShell>{children}</AppShell>
-          <PersistentPlayer />
-        </AudioPlayerProvider>
+        <AuthProvider>
+          <PodcastStoreProvider>
+            <AudioPlayerProvider>
+              <AppShell>{children}</AppShell>
+              <PersistentPlayer />
+            </AudioPlayerProvider>
+          </PodcastStoreProvider>
+        </AuthProvider>
       </body>
     </html>
   );

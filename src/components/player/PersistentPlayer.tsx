@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Play,
   Pause,
@@ -51,10 +52,12 @@ export function PersistentPlayer() {
     playPrevious,
   } = useAudioPlayer();
 
+  const pathname = usePathname();
   const [isShuffle, setIsShuffle] = useState(false);
   const [isRepeat, setIsRepeat] = useState(false);
 
-  if (!currentEpisode) return null;
+  // Never render audio player inside Gospel Forge Studio
+  if (pathname?.startsWith("/studio") || !currentEpisode) return null;
 
   const isSaved = isEpisodeSaved(currentEpisode.id);
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;

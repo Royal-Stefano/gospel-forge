@@ -1,3 +1,20 @@
+export type UserRole = "listener" | "editor" | "admin" | "super_admin";
+export type AccountStatus = "active" | "suspended" | "pending_verification";
+export type PublicationStatus = "draft" | "scheduled" | "published" | "archived";
+
+export interface UserAccount {
+  id: string;
+  email: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string;
+  role: UserRole;
+  status: AccountStatus;
+  bio?: string;
+  createdAt: string;
+  lastSignInAt?: string;
+}
+
 export interface Speaker {
   id: string;
   name: string;
@@ -34,6 +51,8 @@ export interface Episode {
   artworkUrl: string;
   durationSeconds: number;
   publishedAt: string;
+  scheduledPublishAt?: string;
+  status?: PublicationStatus;
   episodeNumber?: number;
   seasonNumber?: number;
   speaker: Speaker;
@@ -42,6 +61,16 @@ export interface Episode {
   playCount: number;
   likesCount: number;
   featured?: boolean;
+  isExplicit?: boolean;
+  youtubeUrl?: string;
+  seoTitle?: string;
+  seoDescription?: string;
+  authorId?: string;
+  authorName?: string;
+  lastEditedById?: string;
+  lastEditedByName?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface PlaylistItem {
@@ -92,6 +121,7 @@ export interface CommunityPost {
   repliesCount: number;
   isLiked?: boolean;
   createdAt: string;
+  isModerated?: boolean;
 }
 
 export interface AudioPlaybackState {
@@ -105,4 +135,30 @@ export interface AudioPlaybackState {
   queue: Episode[];
   isQueueOpen: boolean;
   isNowPlayingExpanded: boolean;
+}
+
+export interface AuditLog {
+  id: string;
+  userId: string;
+  userName: string;
+  userRole: UserRole;
+  action: string;
+  targetType: "episode" | "user" | "role" | "community" | "settings" | "rss";
+  targetId: string;
+  targetTitle?: string;
+  metadata?: Record<string, any>;
+  createdAt: string;
+}
+
+export interface ModerationReport {
+  id: string;
+  targetType: "post" | "comment";
+  targetId: string;
+  content: string;
+  authorName: string;
+  authorId: string;
+  reportedBy: string;
+  reason: string;
+  status: "pending" | "resolved" | "dismissed";
+  reportedAt: string;
 }
