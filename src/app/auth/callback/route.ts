@@ -4,7 +4,17 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/";
+  let next = searchParams.get("next") ?? "/";
+
+  // Sanitize next parameter to prevent open redirect vulnerabilities
+  if (
+    !next.startsWith("/") ||
+    next.startsWith("//") ||
+    next.includes("\\") ||
+    next.includes("://")
+  ) {
+    next = "/";
+  }
 
   if (code) {
     const supabase = await createSupabaseServerClient();

@@ -65,6 +65,7 @@ export function AudioPlayerProvider({
   const [savedEpisodeIds, setSavedEpisodeIds] = useState<string[]>(["ep-1", "ep-2"]);
 
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const trackedPlaysRef = useRef<Set<string>>(new Set());
 
   // Initialize Audio element on mount
   useEffect(() => {
@@ -80,6 +81,7 @@ export function AudioPlayerProvider({
 
     const handleTimeUpdate = () => {
       setCurrentTime(audio.currentTime);
+
       // Persist progress locally
       if (currentEpisode) {
         try {
@@ -89,6 +91,22 @@ export function AudioPlayerProvider({
           );
         } catch {
           // ignore localStorage error
+        }
+
+        // Trigger real play event after 10s of confirmed playback
+        if (
+          audio.currentTime >= 10 &&
+          !trackedPlaysRef.current.has(currentEpisode.id)
+        ) {
+          trackedPlaysRef.current.add(currentEpisode.id);
+          fetch("/api/analytics/track-play", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              episodeId: currentEpisode.id,
+              durationSeconds: Math.round(audio.currentTime),
+            }),
+          }).catch(() => {});
         }
       }
     };

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import { GospelForgeEmblem } from "@/components/brand/GospelForgeEmblem";
 import { VolcanicSummitCathedral } from "@/components/brand/VolcanicSummitCathedral";
 import Link from "next/link";

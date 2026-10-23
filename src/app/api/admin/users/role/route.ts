@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { verifyServerAuth } from "@/lib/auth/serverAuth";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, getClientIp } from "@/lib/security/rateLimiter";
 import { z } from "zod";
 
 const RoleUpdateSchema = z.object({
@@ -10,39 +11,22 @@ const RoleUpdateSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServerClient();
-    let adminUserId = "usr-superadmin";
-    let adminName = "Pastor Marcus Vance";
+    const clientIp = getClientIp(request);
+    const rateLimit = checkRateLimit(`role_update:${clientIp}`, 30, 600);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many role update requests. Please try again later." },
+        { status: 429 }
+      );
+    }
 
-    if (supabase) {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !user) {
-        return NextResponse.json(
-          { error: "Authentication required." },
-          { status: 401 }
-        );
-      }
-
-      adminUserId = user.id;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, display_name")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile || profile.role !== "super_admin") {
-        return NextResponse.json(
-          { error: "Forbidden: Super Administrator privileges required to reassign user roles." },
-          { status: 403 }
-        );
-      }
-
-      adminName = profile.display_name;
+    // Strictly enforce Super Admin role
+    const auth = await verifyServerAuth(request, ["super_admin"]);
+    if (!auth.authenticated || !auth.user || !auth.profile) {
+      return NextResponse.json(
+        { error: auth.error || "Forbidden: Super Administrator privileges required." },
+        { status: auth.statusCode || 403 }
+      );
     }
 
     const body = await request.json();
@@ -56,10 +40,10 @@ export async function POST(request: NextRequest) {
     }
 
     const { targetUserId, newRole } = validation.data;
-    const adminSupabase = getSupabaseAdminClient() || supabase;
+    const adminSupabase: any = getSupabaseAdminClient();
 
     if (adminSupabase) {
-      await adminSupabase
+      const { error: updateError } = await adminSupabase
         .from("profiles")
         .update({
           role: newRole,
@@ -67,9 +51,16 @@ export async function POST(request: NextRequest) {
         })
         .eq("id", targetUserId);
 
+      if (updateError) {
+        return NextResponse.json(
+          { error: "Failed to update user profile in database.", details: updateError.message },
+          { status: 500 }
+        );
+      }
+
       await adminSupabase.from("audit_logs").insert({
-        user_id: adminUserId,
-        user_name: adminName,
+        user_id: auth.user.id,
+        user_name: auth.profile.display_name,
         user_role: "super_admin",
         action: "UPDATE_USER_ROLE",
         target_type: "user",

@@ -6,15 +6,15 @@ export async function POST(request: NextRequest) {
     const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
-    // Secure webhook with bearer token
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // Secure webhook with bearer token — strictly require configured secret
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json(
-        { error: "Unauthorized cron trigger." },
+        { error: "Unauthorized cron trigger. Valid Bearer secret required." },
         { status: 401 }
       );
     }
 
-    const adminSupabase = getSupabaseAdminClient();
+    const adminSupabase: any = getSupabaseAdminClient();
 
     if (!adminSupabase) {
       return NextResponse.json({
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Publish each scheduled episode
-    const episodeIds = scheduledEpisodes.map((ep) => ep.id);
+    const episodeIds = scheduledEpisodes.map((ep: any) => ep.id);
 
     const { error: updateError } = await adminSupabase
       .from("episodes")
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log audit events for scheduled publications
-    const auditEntries = scheduledEpisodes.map((ep) => ({
+    const auditEntries = scheduledEpisodes.map((ep: any) => ({
       user_name: "Automated Scheduler",
       user_role: "system",
       action: "AUTO_PUBLISH_SCHEDULED",

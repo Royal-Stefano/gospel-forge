@@ -129,7 +129,7 @@ interface AuthContextType {
     pass: string,
     displayName: string,
     accountType?: "listener" | "artist",
-    artistDetails?: { ministryName: string; bio: string; sampleLink?: string }
+    artistDetails?: { ministryName: string; bio?: string; sampleLink?: string }
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   resetPassword: (email: string) => Promise<{ success: boolean; message: string }>;
@@ -138,6 +138,12 @@ interface AuthContextType {
     targetUserId: string,
     newRole: UserRole
   ) => Promise<{ success: boolean; error?: string }>;
+  submitArtistApplication: (appData: {
+    ministryName: string;
+    bio: string;
+    sampleLink?: string;
+    socialLinks?: Record<string, string>;
+  }) => Promise<{ success: boolean; error?: string }>;
   approveArtist: (appId: string) => Promise<{ success: boolean; error?: string }>;
   rejectArtist: (appId: string) => Promise<{ success: boolean; error?: string }>;
   toggleUserSuspension: (targetUserId: string) => Promise<{ success: boolean; error?: string }>;
@@ -172,14 +178,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const supabase = getSupabaseBrowserClient();
 
     if (supabase) {
-      supabase.auth.getUser().then(({ data: { user } }) => {
+      supabase.auth.getUser().then(({ data: { user } }: any) => {
         if (user) {
           supabase
             .from("profiles")
             .select("*")
             .eq("id", user.id)
             .single()
-            .then(({ data: profile }) => {
+            .then(({ data: profile }: any) => {
               if (profile) {
                 const userAcc: UserAccount = {
                   id: profile.id,
@@ -202,7 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       const { data: authListener } = supabase.auth.onAuthStateChange(
-        (event, session) => {
+        (event: any, _session: any) => {
           if (event === "SIGNED_OUT") {
             setCurrentUser(null);
             localStorage.removeItem("gospel_auth_session");
@@ -356,7 +362,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       pass: string,
       displayName: string,
       accountType: "listener" | "artist" = "listener",
-      artistDetails?: { ministryName: string; bio: string; sampleLink?: string }
+      artistDetails?: { ministryName: string; bio?: string; sampleLink?: string }
     ): Promise<{ success: boolean; error?: string }> => {
       const normalizedEmail = email.trim().toLowerCase();
       if (!normalizedEmail || !pass || !displayName) {
@@ -539,6 +545,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [currentUser, usersList]
   );
 
+  // User submits artist application
+  const submitArtistApplication = useCallback(
+    async (appData: {
+      ministryName: string;
+      bio: string;
+      sampleLink?: string;
+      socialLinks?: Record<string, string>;
+    }): Promise<{ success: boolean; error?: string }> => {
+      if (!currentUser) {
+        return { success: false, error: "Authentication required to apply as artist." };
+      }
+
+      const supabase = getSupabaseBrowserClient();
+      if (supabase) {
+        await supabase.from("artist_applications").insert({
+          user_id: currentUser.id,
+          ministry_or_band_name: appData.ministryName,
+          bio: appData.bio,
+          sample_audio_link: appData.sampleLink,
+          social_links: appData.socialLinks || {},
+          status: "pending",
+        });
+
+        await supabase
+          .from("profiles")
+          .update({ artist_status: "pending" })
+          .eq("id", currentUser.id);
+      }
+
+      const updated = { ...currentUser, artistStatus: "pending" as ArtistStatus };
+      setCurrentUser(updated);
+      return { success: true };
+    },
+    [currentUser]
+  );
+
   // Admin approves pending artist application
   const approveArtist = useCallback(
     async (appId: string): Promise<{ success: boolean; error?: string }> => {
@@ -693,6 +735,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         resetPassword,
         updateProfile,
         updateUserRole,
+        submitArtistApplication,
         approveArtist,
         rejectArtist,
         toggleUserSuspension,

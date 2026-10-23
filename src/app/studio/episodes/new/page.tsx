@@ -351,7 +351,7 @@ export default function NewEpisodeWizardPage() {
         transcript: transcript,
       };
 
-      await createEpisode(newEpisodeData);
+      await createEpisode(newEpisodeData as any);
       setIsSuccess(true);
     } catch (err) {
       console.error("Failed to publish episode:", err);

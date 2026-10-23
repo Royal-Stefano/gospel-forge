@@ -42,6 +42,15 @@ export default function AdminDashboardPage() {
     "creators" | "episodes" | "comments"
   >("creators");
 
+  const [adminMetrics, setAdminMetrics] = useState({
+    totalUsers: 12580,
+    activeListeners: 8240,
+    verifiedCreators: 340,
+    totalEpisodes: 124,
+    pendingApplicationsCount: 5,
+    totalPlays: 148900,
+  });
+
   // Pending Creators state
   const [pendingCreators, setPendingCreators] = useState([
     {
@@ -86,12 +95,62 @@ export default function AdminDashboardPage() {
     },
   ]);
 
-  const handleApprove = (id: string) => {
+  React.useEffect(() => {
+    fetch("/api/analytics/admin-stats")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.totalUsers === "number") {
+          setAdminMetrics({
+            totalUsers: data.totalUsers,
+            activeListeners: data.activeListeners,
+            verifiedCreators: data.verifiedCreators,
+            totalEpisodes: data.totalEpisodes,
+            pendingApplicationsCount: data.pendingApplicationsCount,
+            totalPlays: data.totalPlays,
+          });
+
+          if (data.pendingApplications && data.pendingApplications.length > 0) {
+            setPendingCreators(
+              data.pendingApplications.map((app: any) => ({
+                id: app.id,
+                name: app.profile?.display_name || app.ministry_or_band_name,
+                role: app.ministry_or_band_name || "Podcast Creator",
+                time: "Recently submitted",
+                avatar:
+                  app.profile?.avatar_url ||
+                  "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=80",
+              }))
+            );
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleApprove = async (id: string) => {
     setPendingCreators((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await fetch("/api/admin/artists/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applicationId: id, action: "approve" }),
+      });
+    } catch (err) {
+      console.warn("Approve action notice:", err);
+    }
   };
 
-  const handleReject = (id: string) => {
+  const handleReject = async (id: string) => {
     setPendingCreators((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await fetch("/api/admin/artists/review", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ applicationId: id, action: "reject" }),
+      });
+    } catch (err) {
+      console.warn("Reject action notice:", err);
+    }
   };
 
   return (
@@ -146,7 +205,7 @@ export default function AdminDashboardPage() {
           <div>
             <span className="text-[11px] text-[#8e8d94] block">Total Users</span>
             <p className="font-heading text-xl sm:text-2xl font-black text-white">
-              12,580
+              {adminMetrics.totalUsers.toLocaleString()}
             </p>
           </div>
           {/* Blue Sparkline */}
@@ -174,7 +233,7 @@ export default function AdminDashboardPage() {
           <div>
             <span className="text-[11px] text-[#8e8d94] block">Active Listeners</span>
             <p className="font-heading text-xl sm:text-2xl font-black text-white">
-              8,240
+              {adminMetrics.activeListeners.toLocaleString()}
             </p>
           </div>
           {/* Yellow Sparkline */}
@@ -202,7 +261,7 @@ export default function AdminDashboardPage() {
           <div>
             <span className="text-[11px] text-[#8e8d94] block">Verified Creators</span>
             <p className="font-heading text-xl sm:text-2xl font-black text-white">
-              340
+              {adminMetrics.verifiedCreators.toLocaleString()}
             </p>
           </div>
           {/* Red Sparkline */}

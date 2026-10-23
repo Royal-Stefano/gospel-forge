@@ -33,6 +33,33 @@ export default function ArtistStudioDashboard() {
   const { currentEpisode, isPlaying, togglePlay, playEpisode } = useAudioPlayer();
 
   const [timeRange, setTimeRange] = useState("Last 30 Days");
+  const [stats, setStats] = useState<{
+    totalPlays: number;
+    uniqueListeners: number;
+    totalFollowers: number;
+    totalDownloads: number;
+  }>({
+    totalPlays: 12580,
+    uniqueListeners: 2340,
+    totalFollowers: 892,
+    totalDownloads: 1450,
+  });
+
+  React.useEffect(() => {
+    fetch("/api/analytics/creator-stats")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && typeof data.totalPlays === "number") {
+          setStats({
+            totalPlays: data.totalPlays,
+            uniqueListeners: data.uniqueListeners || 0,
+            totalFollowers: data.totalFollowers || 0,
+            totalDownloads: data.totalDownloads || Math.round(data.totalPlays * 0.15),
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const latestEpisodes = [
     { ep: EPISODES[0], status: "Published", plays: "2.4K", date: "Oct 12, 2024" },
@@ -120,7 +147,7 @@ export default function ArtistStudioDashboard() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Headphones className="w-4 h-4 text-[#ffb13b]" />
-              <span className="font-heading text-lg font-bold text-white">12,580</span>
+              <span className="font-heading text-lg font-bold text-white">{stats.totalPlays.toLocaleString()}</span>
             </div>
             <p className="text-[10px] text-[#6e6f77] font-mono">Total Plays</p>
           </div>
@@ -141,7 +168,7 @@ export default function ArtistStudioDashboard() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-[#ffb13b]" />
-              <span className="font-heading text-lg font-bold text-white">2,340</span>
+              <span className="font-heading text-lg font-bold text-white">{stats.uniqueListeners.toLocaleString()}</span>
             </div>
             <p className="text-[10px] text-[#6e6f77] font-mono">Total Listeners</p>
           </div>
@@ -161,7 +188,7 @@ export default function ArtistStudioDashboard() {
           <div className="space-y-1">
             <div className="flex items-center gap-2">
               <Heart className="w-4 h-4 text-[#ff4500]" />
-              <span className="font-heading text-lg font-bold text-white">892</span>
+              <span className="font-heading text-lg font-bold text-white">{stats.totalFollowers.toLocaleString()}</span>
             </div>
             <p className="text-[10px] text-[#6e6f77] font-mono">Followers</p>
           </div>

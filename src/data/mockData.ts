@@ -359,6 +359,8 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
   {
     id: "post-1",
     author: {
+      id: "usr-caleb",
+      username: "caleb_v",
       name: "Caleb Vance",
       avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80",
     },
@@ -372,6 +374,8 @@ export const COMMUNITY_POSTS: CommunityPost[] = [
   {
     id: "post-2",
     author: {
+      id: "usr-elena",
+      username: "elena_r",
       name: "Elena Ross",
       avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&auto=format&fit=crop&q=80",
     },

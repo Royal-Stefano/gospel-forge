@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
       filtered = filtered.filter((ep) => ep.seriesId === seriesId);
     }
     if (category) {
-      filtered = filtered.filter((ep) => ep.category.toLowerCase() === category.toLowerCase());
+      filtered = filtered.filter((ep) => (ep.category || "").toLowerCase() === category.toLowerCase());
     }
     if (query) {
       filtered = filtered.filter(

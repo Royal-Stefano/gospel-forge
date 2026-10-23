@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { verifyServerAuth } from "@/lib/auth/serverAuth";
 import { r2Storage } from "@/lib/storage/r2Adapter";
 import { STORAGE_LIMITS } from "@/lib/storage/types";
+import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, getClientIp } from "@/lib/security/rateLimiter";
 import { z } from "zod";
 
 const UploadUrlSchema = z.object({
@@ -13,55 +15,36 @@ const UploadUrlSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServerClient();
+    const clientIp = getClientIp(request);
+    const rateLimit = checkRateLimit(`upload_url:${clientIp}`, 20, 600);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Upload rate limit exceeded. Please wait a few minutes." },
+        { status: 429 }
+      );
+    }
 
-    let userId = "usr-editor"; // Fallback in local demo mode without Supabase env
-    let userRole = "editor";
-    let isApprovedArtist = true;
+    // Require verified authentication
+    const auth = await verifyServerAuth(request);
+    if (!auth.authenticated || !auth.user || !auth.profile) {
+      return NextResponse.json(
+        { error: auth.error || "Authentication required to upload media." },
+        { status: auth.statusCode || 401 }
+      );
+    }
 
-    if (supabase) {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
+    const isApprovedArtist =
+      auth.profile.artist_status === "approved" ||
+      ["editor", "admin", "super_admin"].includes(auth.profile.role);
 
-      if (authError || !user) {
-        return NextResponse.json(
-          { error: "Authentication required to upload media." },
-          { status: 401 }
-        );
-      }
-
-      userId = user.id;
-
-      // Verify artist publishing or admin permissions in database
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, artist_status")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile) {
-        return NextResponse.json(
-          { error: "User profile not found." },
-          { status: 403 }
-        );
-      }
-
-      userRole = profile.role;
-      isApprovedArtist =
-        profile.artist_status === "approved" ||
-        ["editor", "admin", "super_admin"].includes(profile.role);
-
-      if (!isApprovedArtist) {
-        return NextResponse.json(
-          {
-            error:
-              "Creator authorization required. Pending artists and listeners cannot upload media until approved by Gospel Forge administrators.",
-          },
-          { status: 403 }
-        );
-      }
+    if (!isApprovedArtist) {
+      return NextResponse.json(
+        {
+          error:
+            "Creator authorization required. Pending artists and listeners cannot upload media until approved by Gospel Forge administrators.",
+        },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -133,13 +116,13 @@ export async function POST(request: NextRequest) {
       fileSizeBytes,
       contentType,
       mediaType,
-      userId,
+      userId: auth.user.id,
     });
 
-    // Record pending media asset in database if Supabase is active
-    if (supabase) {
-      await supabase.from("media_assets").insert({
-        user_id: userId,
+    const adminSupabase: any = getSupabaseAdminClient();
+    if (adminSupabase) {
+      await adminSupabase.from("media_assets").insert({
+        user_id: auth.user.id,
         storage_key: presignedData.storageKey,
         bucket_name: process.env.R2_BUCKET_NAME || "gospel-forge-media",
         file_name: fileName,

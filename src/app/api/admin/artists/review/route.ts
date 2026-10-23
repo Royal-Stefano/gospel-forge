@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { verifyServerAuth } from "@/lib/auth/serverAuth";
 import { getSupabaseAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, getClientIp } from "@/lib/security/rateLimiter";
 import { z } from "zod";
 
 const ReviewSchema = z.object({
@@ -11,39 +12,22 @@ const ReviewSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createSupabaseServerClient();
-    let adminUserId = "usr-admin";
-    let adminName = "Administrator";
+    const clientIp = getClientIp(request);
+    const rateLimit = checkRateLimit(`artist_review:${clientIp}`, 60, 600);
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        { error: "Too many review requests. Please try again later." },
+        { status: 429 }
+      );
+    }
 
-    if (supabase) {
-      const {
-        data: { user },
-        error: authError,
-      } = await supabase.auth.getUser();
-
-      if (authError || !user) {
-        return NextResponse.json(
-          { error: "Authentication required." },
-          { status: 401 }
-        );
-      }
-
-      adminUserId = user.id;
-
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role, display_name")
-        .eq("id", user.id)
-        .single();
-
-      if (!profile || !["admin", "super_admin"].includes(profile.role)) {
-        return NextResponse.json(
-          { error: "Forbidden: Administrator role required to review artist applications." },
-          { status: 403 }
-        );
-      }
-
-      adminName = profile.display_name;
+    // Require Administrator or Super Administrator role
+    const auth = await verifyServerAuth(request, ["admin", "super_admin"]);
+    if (!auth.authenticated || !auth.user || !auth.profile) {
+      return NextResponse.json(
+        { error: auth.error || "Forbidden: Administrator role required to review artist applications." },
+        { status: auth.statusCode || 403 }
+      );
     }
 
     const body = await request.json();
@@ -57,7 +41,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { applicationId, action, rejectionReason } = validation.data;
-    const adminSupabase = getSupabaseAdminClient() || supabase;
+    const adminSupabase: any = getSupabaseAdminClient();
 
     if (adminSupabase) {
       // Fetch application
@@ -77,15 +61,22 @@ export async function POST(request: NextRequest) {
       const newStatus = action === "approve" ? "approved" : "rejected";
 
       // 1. Update application record
-      await adminSupabase
+      const { error: updateAppError } = await adminSupabase
         .from("artist_applications")
         .update({
           status: newStatus,
           reviewed_at: new Date().toISOString(),
-          reviewed_by: adminUserId,
+          reviewed_by: auth.user.id,
           rejection_reason: action === "reject" ? rejectionReason : null,
         })
         .eq("id", applicationId);
+
+      if (updateAppError) {
+        return NextResponse.json(
+          { error: "Failed to update application status.", details: updateAppError.message },
+          { status: 500 }
+        );
+      }
 
       // 2. If approved, update user's profile to approved artist and grant editor role
       if (action === "approve") {
@@ -107,19 +98,18 @@ export async function POST(request: NextRequest) {
           .eq("id", app.user_id);
       }
 
-      // 3. Write immutable audit log
+      // 3. Log audit action
       await adminSupabase.from("audit_logs").insert({
-        user_id: adminUserId,
-        user_name: adminName,
-        user_role: "admin",
-        action: action === "approve" ? "APPROVE_ARTIST" : "REJECT_ARTIST",
-        target_type: "artist",
-        target_id: app.user_id,
+        user_id: auth.user.id,
+        user_name: auth.profile.display_name,
+        user_role: auth.profile.role,
+        action: action === "approve" ? "APPROVE_ARTIST_APPLICATION" : "REJECT_ARTIST_APPLICATION",
+        target_type: "artist_application",
+        target_id: applicationId,
         target_title: app.ministry_or_band_name,
         metadata: {
-          applicationId,
-          action,
-          rejectionReason,
+          applicantUserId: app.user_id,
+          rejectionReason: action === "reject" ? rejectionReason : null,
         },
       });
     }

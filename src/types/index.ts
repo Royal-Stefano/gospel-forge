@@ -1,6 +1,14 @@
 export type UserRole = "listener" | "editor" | "admin" | "super_admin";
 export type AccountStatus = "active" | "suspended" | "pending_verification";
-export type PublicationStatus = "draft" | "scheduled" | "published" | "archived";
+export type PublicationStatus =
+  | "draft"
+  | "submitted"
+  | "in_review"
+  | "approved"
+  | "published"
+  | "rejected"
+  | "archived"
+  | "scheduled";
 export type ArtistStatus = "none" | "pending" | "approved" | "rejected";
 
 export interface ArtistApplication {
@@ -22,6 +30,7 @@ export interface UserAccount {
   email: string;
   username: string;
   displayName: string;
+  name?: string;
   avatarUrl: string;
   role: UserRole;
   status: AccountStatus;
@@ -70,12 +79,16 @@ export interface Episode {
   title: string;
   slug: string;
   description: string;
+  category?: string;
   showNotes?: string;
   transcript?: string;
   audioUrl: string;
   artworkUrl: string;
+  bannerUrl?: string;
+  speakerId?: string;
   durationSeconds: number;
   publishedAt: string;
+  publishDate?: string;
   scheduledPublishAt?: string;
   status?: PublicationStatus;
   episodeNumber?: number;
@@ -83,8 +96,8 @@ export interface Episode {
   speaker: Speaker;
   topics: string[];
   scriptureReferences: string[];
-  playCount: number;
-  likesCount: number;
+  playCount?: number;
+  likesCount?: number;
   featured?: boolean;
   isExplicit?: boolean;
   youtubeUrl?: string;
@@ -108,13 +121,16 @@ export interface PlaylistItem {
 
 export interface Playlist {
   id: string;
-  userId: string;
+  userId?: string;
   title: string;
   description?: string;
   coverUrl?: string;
-  isPublic: boolean;
-  itemCount: number;
-  createdAt: string;
+  artworkUrl?: string;
+  isPublic?: boolean;
+  itemCount?: number;
+  episodeCount?: number;
+  updatedAt?: string;
+  createdAt?: string;
 }
 
 export interface UserProfile {
@@ -137,7 +153,13 @@ export interface CommunityPost {
     username: string;
     avatarUrl: string;
   };
-  category: "Discussions" | "Prayer Requests" | "Testimonies" | "Events";
+  category:
+    | "Discussions"
+    | "Prayer Requests"
+    | "Testimonies"
+    | "Events"
+    | "Discipleship"
+    | "Prayer & Praise";
   content: string;
   scriptureCitation?: string;
   attachedEpisodeId?: string;
