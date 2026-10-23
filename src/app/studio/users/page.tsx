@@ -18,7 +18,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { UserRole } from "@/types";
+import type { UserRole } from "@/types";
 import { formatDate, cn } from "@/lib/utils";
 
 export default function StudioUsersManager() {

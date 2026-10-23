@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { usePodcastStore } from "@/context/PodcastStoreContext";
 import { useAuth } from "@/context/AuthContext";
-import { PublicationStatus } from "@/types";
+import type { PublicationStatus } from "@/types";
 import { formatTime, formatDate, cn } from "@/lib/utils";
 
 export default function StudioEpisodesManager() {

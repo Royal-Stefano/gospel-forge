@@ -1,4 +1,4 @@
-import { UserRole, ArtistStatus } from "@/types";
+import type { UserRole, ArtistStatus } from "@/types";
 
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
   listener: 1,

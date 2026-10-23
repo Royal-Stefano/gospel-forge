@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { usePodcastStore } from "@/context/PodcastStoreContext";
 import { useAuth } from "@/context/AuthContext";
-import { PublicationStatus } from "@/types";
+import type { PublicationStatus } from "@/types";
 
 export default function EditEpisodePage() {
   const params = useParams();
