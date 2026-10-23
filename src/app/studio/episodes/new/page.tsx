@@ -42,7 +42,7 @@ import {
 } from "lucide-react";
 import { usePodcastStore } from "@/context/PodcastStoreContext";
 import { useAuth } from "@/context/AuthContext";
-import { Episode, PublicationStatus } from "@/types";
+import type { Episode, PublicationStatus } from "@/types";
 import { formatTime, cn } from "@/lib/utils";
 
 export default function NewEpisodeWizardPage() {
@@ -233,8 +233,8 @@ export default function NewEpisodeWizardPage() {
         topics: tags,
         status:
           publishOption === "now"
-            ? PublicationStatus.PUBLISHED
-            : PublicationStatus.SCHEDULED,
+            ? "published"
+            : "scheduled",
         publishDate:
           publishOption === "now"
             ? new Date().toISOString()
