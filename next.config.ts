@@ -1,9 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
+  output: "standalone",
   turbopack: {
     rules: {
       "*.css": {
@@ -11,6 +9,26 @@ const nextConfig: NextConfig = {
         as: "*.css",
       },
     },
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.soundhelix.com",
+      },
+      {
+        protocol: "https",
+        hostname: "**.anchor.fm",
+      },
+      {
+        protocol: "https",
+        hostname: "**.spotifycdn.com",
+      },
+    ],
   },
 };
 
