@@ -38,9 +38,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { name: "Library", href: "/library", icon: Library },
   ];
 
-  // Do not render public streaming shell inside Gospel Forge Studio or full-screen Auth / Onboarding pages
+  // Do not render public streaming shell inside Gospel Forge Studio, Admin, or full-screen Auth / Onboarding pages
   if (
     pathname?.startsWith("/studio") ||
+    pathname?.startsWith("/admin") ||
     pathname === "/signup" ||
     pathname === "/login" ||
     pathname?.startsWith("/artist") ||
